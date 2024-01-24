@@ -1,6 +1,6 @@
 import logging
 
-from infrahub_sdk import InfrahubClient, NodeStore
+from infrahub_sdk import InfrahubBatch, InfrahubClient, NodeStore
 
 from utils import upsert_object
 
@@ -53,6 +53,14 @@ PLATFORMS = (
     ("Linux", "linux", "linux", "linux", "linux")
 )
 
+DEVICE_TYPES = (
+    # name, part_number, height (U), full_depth, platform
+    ("MX204", "MX204-HWBASE-AC-FS", 1, False, "Juniper JunOS"),
+    ("CCS-720DP-48S-2F", None, 1, False, "Arista EOS"),
+    ("NCS-5501-SE", None, 1, False, "Cisco IOS-XR"),
+    ("ASR1002-HX", None, 2, True, "Cisco IOS-XR"),
+)
+
 GROUPS = (
     # name, description
     ("edge_routers", "Edge Routers"),
@@ -64,10 +72,22 @@ GROUPS = (
     ("core_interfaces", "Core Interface"),
 )
 
+BGP_PEER_GROUPS = (
+    # name, import policy, export policy, local AS, remote AS
+    ("POP_INTERNAL", "IMPORT_INTRA_POP", "EXPORT_INTRA_POP", "Duff", "Duff"),
+    ("POP_GLOBAL", "IMPORT_POP_GLOBAL", "EXPORT_POP_GLOBLA", "Duff", None),
+    ("UPSTREAM_DEFAULT", "IMPORT_UPSTREAM", "EXPORT_PUBLIC_PREFIX", "Duff", None),
+    ("UPSTREAM_ARELION", "IMPORT_UPSTREAM", "EXPORT_PUBLIC_PREFIX", "Duff", "Arelion"),
+    ("IX_DEFAULT", "IMPORT_IX", "EXPORT_PUBLIC_PREFIX", "Duff", None),
+)
+
 store = NodeStore()
 
-
-async def run(client: InfrahubClient, log: logging.Logger, branch: str) -> None:
+async def create_bascis(
+        client: InfrahubClient,
+        log: logging.Logger,
+        branch: str
+    ):
     # Create Batch for Accounts, Platforms, and Standards Groups
     log.info("Creating User Accounts, Platforms, and Standard Groups")
     batch = await client.create_batch()
@@ -206,3 +226,76 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str) -> None:
             )
     async for node, _ in batch.execute():
         log.info(f"- Created {node._schema.kind} - {node.name.value}")
+
+    # ------------------------------------------
+    # Create Standard Device Type
+    # ------------------------------------------
+    batch = await client.create_batch()
+    log.info("Creating Standard Device Type")
+    for device_type in DEVICE_TYPES:
+       platform_id = store.get(kind="InfraPlatform", key=device_type[4]).id
+       data = {
+           "name": { "value": device_type[0]},
+           "part_number": { "value": device_type[1]},
+           "height": { "value": device_type[2]},
+           "full_depth": { "value": device_type[3]},
+           "platform": { "value": platform_id},
+        }
+       await upsert_object(
+            client=client,
+            log=log,
+            branch=branch,
+            object_name=device_type[0],
+            kind_name="InfraDeviceType",
+            data=data,
+            store=store,
+            batch=batch
+            )
+    async for node, _ in batch.execute():
+        log.info(f"- Created {node._schema.kind} - {node.name.value}")
+
+    # ------------------------------------------
+    # Create BGP Peer Groups
+    # ------------------------------------------
+    log.info(f"Creating BGP Peer Groups")
+    account = store.get(key="pop-builder", kind="CoreAccount")
+    batch = await client.create_batch()
+    for peer_group in BGP_PEER_GROUPS:
+        remote_as = remote_as_id = None
+        if peer_group[4]:
+            remote_as = store.get(kind="InfraAutonomousSystem", key=peer_group[4], raise_when_missing=False)
+        local_as = store.get(kind="InfraAutonomousSystem", key=peer_group[3])
+        if remote_as:
+            remote_as_id = remote_as.id
+        if local_as:
+            local_as_id = local_as.id
+
+        data={
+            "name": {"value": peer_group[0], "source": account.id},
+            "import_policies": {"value": peer_group[1], "source": account.id},
+            "export_policies": {"value": peer_group[2], "source": account.id},
+            "local_as": local_as_id,
+            "remote_as": remote_as_id,
+        }
+        await upsert_object(
+            client=client,
+            log=log,
+            branch=branch,
+            object_name=peer_group[0],
+            kind_name="InfraBGPPeerGroup",
+            data=data,
+            store=store,
+            batch=batch,
+            )
+
+    async for node, _ in batch.execute():
+        log.info(f"- Created {node._schema.kind} - {node.name.value}")
+
+# ---------------------------------------------------------------
+# Use the `infrahubctl run` command line to execute this script
+#
+#   infrahubctl run models/infrastructure_edge.py
+#
+# ---------------------------------------------------------------
+async def run(client: InfrahubClient, log: logging.Logger, branch: str) -> None:
+    await create_bascis(client=client, log=log, branch=branch)

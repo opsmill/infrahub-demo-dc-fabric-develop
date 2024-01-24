@@ -5,7 +5,6 @@ from typing import Dict, List, Optional
 from infrahub_sdk import InfrahubClient, InfrahubNode, NodeStore
 from infrahub_sdk.batch import InfrahubBatch
 from infrahub_sdk.exceptions import GraphQLError
-from infrahub_sdk.timestamp import Timestamp
 
 async def upsert_object(
         client: InfrahubClient,
@@ -32,11 +31,11 @@ async def upsert_object(
             batch.add(task=obj.save, allow_upsert=allow_upsert, node=obj)
         store.set(key=object_name, node=obj)
     except GraphQLError as e:
-        log.info(f"- Creation failed for {obj._schema.kind} - {object_name} due to {e}" )
+        log.debug(f"- Creation failed for {obj._schema.kind} - {object_name} due to {e}" )
         if retrived_on_failure:
             obj = await client.get(kind=kind_name, name__value=object_name)
             store.set(key=object_name, node=obj)
-            log.info(f"- Retrieved {obj._schema.kind} - {object_name}")
+            log.debug(f"- Retrieved {obj._schema.kind} - {object_name}")
 
     return obj
 
