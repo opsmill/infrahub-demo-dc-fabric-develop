@@ -14,7 +14,7 @@ from utils import add_relationships, group_add_member, populate_local_store, ups
 # pylint: skip-file
 
 INTERFACE_MGMT_NAME = {
-    "MX204": "fxp0",
+    "QFX5110-48S-S": "fxp0",
     "CCS-720DP-48S-2F": "Management1",
     "NCS-5501-SE": "MgmtEth0/RP0/CPU0/0",
     "ASR1002-HX": "GigabitEthernet0",
@@ -22,17 +22,17 @@ INTERFACE_MGMT_NAME = {
 }
 
 INTERFACE_LOOP_NAME = {
-    "MX204": "lo0",
+    "QFX5110-48S-S": "lo0",
     "CCS-720DP-48S-2F": "loopback 1",
     "NCS-5501-SE": "Loopback 1",
     "ASR1002-HX": "Loopback 1",
     "linux": "lo"
 }
 
-# TODO replace name by real ones
+# TODO replace name by real name
 DEVICES_INTERFACES = {
     # Device Type [ Interfaces ]
-    "MX204": [
+    "QFX5110-48S-S": [
         "Ethernet1",
         "Ethernet2",
         "Ethernet3",

@@ -37,11 +37,6 @@ generics:
         peer: InfraDevice
         cardinality: many
         optional: true
-      # - name: topology
-      #   label: Topologies
-      #   peer: TopologyTopology
-      #   cardinality: many
-      #   optional: true
   - name: Interface
     namespace: Infra
     description: "Generic Network Interface."
@@ -826,6 +821,21 @@ nodes:
             label: Deprecated
           - name: reserved
             label: Reserved
+      - name: role
+        kind: Dropdown
+        choices:
+          - name: loopback
+            label: Loopback
+          - name: management
+            label: Management
+          - name: public
+            label: Public
+          - name: server
+            label: Server
+          - name: supernet
+            label: Supernet
+          - name: technical
+            label: Technical
     relationships:
       - name: organization
         peer: CoreOrganization

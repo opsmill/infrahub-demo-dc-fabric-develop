@@ -1,5 +1,5 @@
 import logging
-
+from typing import Dict, Optional
 from infrahub_sdk import InfrahubBatch, InfrahubClient, NodeStore
 
 from utils import upsert_object
@@ -297,5 +297,5 @@ async def create_bascis(
 #   infrahubctl run models/infrastructure_edge.py
 #
 # ---------------------------------------------------------------
-async def run(client: InfrahubClient, log: logging.Logger, branch: str) -> None:
+async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs) -> None:
     await create_bascis(client=client, log=log, branch=branch)

@@ -27,7 +27,7 @@ site_locations = {name: (type, parent) for name, type, parent in LOCATIONS if ty
 
 # We assigned a /16 per Location for "data" (257 Locations possibles)
 INTERNAL_POOL = IPv4Network("10.0.0.0/8").subnets(new_prefix=16)
-LOCATION_SUBNETS = {location: next(INTERNAL_POOL) for location in site_locations}
+LOCATION_SUPERNETS = {location: next(INTERNAL_POOL) for location in site_locations}
 
 # We assigned a /24 per Location for "management" (257 Locations possibles)
 MANAGEMENT_POOL = IPv4Network("172.16.0.0/16").subnets(new_prefix=24)
@@ -117,9 +117,9 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
             continue
 
         # We cut the prefixes attribued to the Location
-        location_subnets = LOCATION_SUBNETS[location_name]
-        location_loopback_pool = list(location_subnets.subnets(new_prefix=24))[-1]
-        location_p2p_pool = list(location_subnets.subnets(new_prefix=24))[-2]
+        location_supernet = LOCATION_SUPERNETS[location_name]
+        location_loopback_pool = list(location_supernet.subnets(new_prefix=24))[-1]
+        location_p2p_pool = list(location_supernet.subnets(new_prefix=24))[-2]
 
         location_mgmt_pool = LOCATION_MGMTS[location_name]
         # mgmt_address_pool = location_mgmt.hosts()
@@ -167,24 +167,52 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
         # Create Prefix
         # --------------------------------------------------
         batch = await client.create_batch()
+        # Create Supernet
+        supernet_description = f"{location_name.upper()}-supernet-{IPv4Network(location_supernet).network_address}"
+        data = {
+            "prefix":  {"value": location_supernet },
+            "description": {"value": supernet_description},
+            "organization": {"id": orga_duff.id },
+            "location": {"id": location_id },
+            "status": {"value": "active"},
+            "role": {"value": "supernet"},
+        }
+        prefix_obj = await upsert_object(
+            client=client,
+            log=log,
+            branch=branch,
+            object_name=location_supernet,
+            kind_name="InfraPrefix",
+            data=data,
+            store=store,
+            batch=batch
+        )
+        # Create /24 specifics subnets Pool
         for prefix in location_prefixes:
             vlan_id = None
             if any(prefix.subnet_of(external_net) for external_net in EXTERNAL_NETWORKS):
                 prefix_status = "active"
-                description = f"{location_name}-external-{IPv4Network(prefix).network_address}"
+                prefix_description = f"{location_name.upper()}-ext-{IPv4Network(prefix).network_address}"
+                prefix_role = "public"
             elif prefix.subnet_of(location_mgmt_pool):
                 prefix_status = "active"
-                description = f"{location_name}-mgmt-{IPv4Network(prefix).network_address}"
+                prefix_description = f"{location_name.upper()}-mgmt-{IPv4Network(prefix).network_address}"
+                prefix_role = "management"
                 vlan_id = mgmt_vlan.id
             else:
                 prefix_status = "reserved"
-                description = f"{location_name}-internal-{IPv4Network(prefix).network_address}"
+                prefix_description = f"{location_name.upper()}-int-{IPv4Network(prefix).network_address}"
+                if prefix.subnet_of(location_loopback_pool):
+                    prefix_role = "loopback"
+                else:
+                    prefix_role = "technical"
             data = {
                 "prefix":  {"value": prefix },
-                "description": {"value": description},
+                "description": {"value": prefix_description},
                 "organization": {"id": orga_duff.id },
                 "location": {"id": location_id },
                 "status": {"value": prefix_status},
+                "role": {"value": prefix_role},
                 "vlan": {"id": vlan_id},
             }
             prefix_obj = await upsert_object(
@@ -206,7 +234,7 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
 #   infrahubctl run models/infrastructure_edge.py
 #
 # ---------------------------------------------------------------
-async def run(client: InfrahubClient, log: logging.Logger, branch: str):
+async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs) -> None:
 
     # ------------------------------------------
     # Create Sites

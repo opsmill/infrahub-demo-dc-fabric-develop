@@ -139,7 +139,7 @@ async def create_topology(client: InfrahubClient, log: logging.Logger, branch: s
 #   infrahubctl run models/infrastructure_edge.py
 #
 # ---------------------------------------------------------------
-async def run(client: InfrahubClient, log: logging.Logger, branch: str) -> None:
+async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs) -> None:
     log.info("Retrieving objects from Infrahub")
     try:
         accounts=await client.all("CoreAccount")
