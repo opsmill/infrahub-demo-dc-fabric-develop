@@ -125,12 +125,12 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
         # mgmt_address_pool = location_mgmt.hosts()
 
         location_external_net = LOCATION_EXTERNAL_NETS[location_name]
-        #location_external_net_pool = list(location_external_net.subnets(new_prefix=31))
         location_prefixes = [
+            location_external_net,
             location_loopback_pool,
             location_p2p_pool,
             location_mgmt_pool
-            ] #+ location_external_net_pool
+            ]
         # --------------------------------------------------
         # Create VLANs
         # --------------------------------------------------
@@ -146,7 +146,7 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
                 "description": {"value": f"{location_name.upper()} {vlan[1].title()} VLAN" },
                 "status": {"value": ACTIVE_STATUS, "owner": account_ops.id},
                 "role": {"value": role, "source": account_pop.id, "is_protected": True, "owner": account_eng.id},
-                "site": {"id": location_id},
+                "location": {"id": location_id},
             }
             await upsert_object(
                 client=client,

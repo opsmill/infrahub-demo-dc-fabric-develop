@@ -180,7 +180,6 @@ async def create_bascis(
             )
     async for node, _ in batch.execute():
         log.info(f"- Created {node._schema.kind} - {node.name.value}")
-
     # Autonomous System
     batch = await client.create_batch()
     for org in ORGANIZATIONS:
@@ -203,7 +202,6 @@ async def create_bascis(
                 )
     async for node, _ in batch.execute():
         log.info(f"- Created {node._schema.kind} - {node.name.value}")
-
     # ------------------------------------------
     # Create Tags
     # ------------------------------------------
@@ -226,7 +224,6 @@ async def create_bascis(
             )
     async for node, _ in batch.execute():
         log.info(f"- Created {node._schema.kind} - {node.name.value}")
-
     # ------------------------------------------
     # Create Standard Device Type
     # ------------------------------------------
@@ -239,7 +236,7 @@ async def create_bascis(
            "part_number": { "value": device_type[1]},
            "height": { "value": device_type[2]},
            "full_depth": { "value": device_type[3]},
-           "platform": { "value": platform_id},
+           "platform": { "id": platform_id},
         }
        await upsert_object(
             client=client,
@@ -253,7 +250,6 @@ async def create_bascis(
             )
     async for node, _ in batch.execute():
         log.info(f"- Created {node._schema.kind} - {node.name.value}")
-
     # ------------------------------------------
     # Create BGP Peer Groups
     # ------------------------------------------

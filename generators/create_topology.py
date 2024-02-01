@@ -11,13 +11,13 @@ from utils import group_add_member, populate_local_store, upsert_object
 
 TOPOLOGY = (
     # name, description, Location
-    ("atl-pod1", "Small Fabric in ATL", "atl"),
+    ("fra-pod1", "Small Fabric in ATL", "fra"),
     ("ord-pod1", "Big Fabric in ORD", "ord"),
 )
 
 TOPOLOGY_ELEMENTS = {
     # Topology [ Quantity, Device Role, Device Type, mtu, mlag support ]
-    "atl-pod1": [
+    "fra-pod1": [
         ( 2, "spine", "CCS-720DP-48S-2F", 1500, True),
         ( 2, "leaf", "CCS-720DP-48S-2F", 1500, False),
     ],
