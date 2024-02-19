@@ -321,7 +321,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
         device_type_name = device_type.name.value
 
         for id in range(1, int(topology_element.quantity.value)+1):
-            device_name = f"{location_name}-{topology_name}-{device_role_name}{id}"
+            device_name = f"{topology_name}-{device_role_name}{id}"
             data={
                 "name": {"value": device_name, "source": account_pop.id, "is_protected": True},
                 "site": {"id": location_id, "source": account_pop.id, "is_protected": True},
@@ -342,15 +342,15 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 )
 
             # Add device to groups
-            platform_group_name = f"{platform.name.value.lower().split(' ', 1)[0]}_devices"
-            platform_group = store.get(key=platform_group_name, kind="CoreStandardGroup")
-            await group_add_member(
-                client=client,
-                group=platform_group,
-                members=[device_obj],
-                branch=branch
-                )
-            log.info(f"- Add {device_name} to {platform_group_name} CoreStandardGroup")
+            # platform_group_name = f"{platform.name.value.lower().split(' ', 1)[0]}_devices"
+            # platform_group = store.get(key=platform_group_name, kind="CoreStandardGroup")
+            # await group_add_member(
+            #     client=client,
+            #     group=platform_group,
+            #     members=[device_obj],
+            #     branch=branch
+            #     )
+            # log.info(f"- Add {device_name} to {platform_group_name} CoreStandardGroup")
 
             # FIXME  Interface name is not unique, upsert() is not good enough for indempotency. Need constraints
             DEVICE_INTERFACE_OBJS[device_name] = await client.filters(kind="InfraInterfaceL3", device__name__value=device_name, branch=branch)
@@ -424,7 +424,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
 
             # Set Mgmt IP as Primary IP
             device_obj.primary_address = ip_mgmt_obj
-            await device_obj.save()
+            await device_obj.save(allow_upsert=True)
             store.set(key="device_name", node=device_obj)
             log.info(f"- Set {ip_mgmt} as {device_name} Primary IP")
 
@@ -560,16 +560,16 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 else:
                     uplink_port = leaf_uplink_interfaces[offset + 1]
 
-            # Retrieve interfaces from store (as we create them above) #{location_name}-{topology_name}-{device_role_name}
-            intf_spine_obj = store.get(kind="InfraInterfaceL3", key=f"{location_name}-{topology_name}-spine{spine_idx}-{spine_port}")
-            intf_leaf_obj = store.get(kind="InfraInterfaceL3", key=f"{location_name}-{topology_name}-leaf{leaf_idx}-{uplink_port}")
+            # Retrieve interfaces from store (as we create them above) #{topology_name}-{device_role_name}
+            intf_spine_obj = store.get(kind="InfraInterfaceL3", key=f"{topology_name}-spine{spine_idx}-{spine_port}")
+            intf_leaf_obj = store.get(kind="InfraInterfaceL3", key=f"{topology_name}-leaf{leaf_idx}-{uplink_port}")
 
             new_spine_intf_description = intf_spine_obj.description.value + f" to {intf_leaf_obj.description.value.split(':', 1)[1].strip()}"
             spine_ico_ip_description = intf_spine_obj.description.value
             new_leaf_intf_description = intf_leaf_obj.description.value + f" to {intf_spine_obj.description.value.split(':', 1)[1].strip()}"
             leaf_ico_ip_description = intf_leaf_obj.description.value
 
-            interconnection = list(next(location_technical_net_pool).hosts())
+            interconnection = list(next(iter(location_technical_net_pool)).hosts())
             spine_ip = f"{str(interconnection[0])}/31"
             leaf_ip = f"{str(interconnection[1])}/31"
             await upsert_ip_address(
@@ -603,7 +603,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
             intf_leaf_obj.status.value  = ACTIVE_STATUS
             intf_leaf_obj.connected_endpoint = intf_spine_obj
             await intf_leaf_obj.save()
-            log.info(f"- Connected {location_name}-{topology_name}-leaf{leaf_idx}-{uplink_port} to {location_name}-{topology_name}-spine{spine_idx}-{spine_port}")
+            log.info(f"- Connected {topology_name}-leaf{leaf_idx}-{uplink_port} to {topology_name}-spine{spine_idx}-{spine_port}")
 
     # Cabling Spines <-> Spines & Leaf <-> Leaf
     if not spine_peer_interfaces or not leaf_peer_interfaces:
@@ -615,8 +615,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
         return None
 
     for leaf_idx in range(1, leaf_quantity + 1, 2):
-        leaf1_name = f"{location_name}-{topology_name}-leaf{leaf_idx}"
-        leaf2_name = f"{location_name}-{topology_name}-leaf{leaf_idx + 1}"
+        leaf1_name = f"{topology_name}-leaf{leaf_idx}"
+        leaf2_name = f"{topology_name}-leaf{leaf_idx + 1}"
         for leaf_peer_interface in leaf_peer_interfaces:
             intf_leaf1_obj = store.get(kind="InfraInterfaceL3", key=f"{leaf1_name}-{leaf_peer_interface}")
             intf_leaf2_obj = store.get(kind="InfraInterfaceL3", key=f"{leaf2_name}-{leaf_peer_interface}")
@@ -636,8 +636,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
             await intf_leaf2_obj.save()
 
     for spine_idx in range(1, spine_quantity + 1, 2):
-        spine1_name = f"{location_name}-{topology_name}-spine{spine_idx}"
-        spine2_name = f"{location_name}-{topology_name}-spine{spine_idx + 1}"
+        spine1_name = f"{topology_name}-spine{spine_idx}"
+        spine2_name = f"{topology_name}-spine{spine_idx + 1}"
         for spine_peer_interface in spine_peer_interfaces:
             intf_spine1_obj = store.get(kind="InfraInterfaceL3", key=f"{spine1_name}-{spine_peer_interface}")
             intf_spine2_obj = store.get(kind="InfraInterfaceL3", key=f"{spine2_name}-{spine_peer_interface}")
