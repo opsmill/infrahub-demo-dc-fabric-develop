@@ -259,7 +259,7 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs
         populate_local_store(objects=topologies, key_type="name", store=store)
 
     except Exception as e:
-        log.error(f"Fail to populate due to {e}")
+        log.info(f"Fail to populate due to {e}")
         exit(1)
 
     log.info("Generation Location")

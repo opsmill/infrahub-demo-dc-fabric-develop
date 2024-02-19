@@ -93,16 +93,16 @@ DEVICES_INTERFACES = {
 # 12 Interfaces to fit DEVICES_INTERFACES
 INTERFACE_ROLES_MAPPING = {
     "spine": [
-        "leaf",     # Ethernet1  - leaf1
-        "leaf",     # Ethernet2  - leaf2
-        "leaf",     # Ethernet3  - leaf3
-        "leaf",     # Ethernet4  - leaf4
-        "leaf",     # Ethernet5  - leaf5
-        "leaf",     # Ethernet6  - leaf6
+        "leaf",     # Ethernet1  - leaf1 (L3)
+        "leaf",     # Ethernet2  - leaf2 (L3)
+        "leaf",     # Ethernet3  - leaf3 (L3)
+        "leaf",     # Ethernet4  - leaf4 (L3)
+        "leaf",     # Ethernet5  - leaf5 (L3)
+        "leaf",     # Ethernet6  - leaf6 (L3)
         "spare",    # Ethernet7
         "spare",    # Ethernet8
-        "peer",     # Ethernet9  - spine
-        "peer",     # Ethernet10 - spine
+        "peer",     # Ethernet9  - spine (L2)
+        "peer",     # Ethernet10 - spine (L2)
         "transit",  # Ethernet11
         "transit",  # Ethernet12
     ],
@@ -113,12 +113,12 @@ INTERFACE_ROLES_MAPPING = {
         "server",   # Ethernet4
         "spare",    # Ethernet5
         "spare",    # Ethernet6
-        "peer",     # Ethernet7  - leaf
-        "peer",     # Ethernet8  - leaf
-        "uplink",   # Ethernet9  - spine1
-        "uplink",   # Ethernet10 - spine2
-        "uplink",   # Ethernet11 - spine3
-        "uplink",   # Ethernet12 - spine4
+        "peer",     # Ethernet7  - leaf (L2)
+        "peer",     # Ethernet8  - leaf (L2)
+        "uplink",   # Ethernet9  - spine1 (L3)
+        "uplink",   # Ethernet10 - spine2 (L3)
+        "uplink",   # Ethernet11 - spine3 (L3)
+        "uplink",   # Ethernet12 - spine4 (L3)
     ]
 }
 
@@ -126,11 +126,11 @@ L3_ROLE_MAPPING = [
     "backbone",
     "transit",
     "peering",
-    "peer",
     "uplink",
     "leaf"
 ]
 L2_ROLE_MAPPING = [
+    "peer",
     "server",
     "spare"
 ]
@@ -491,6 +491,10 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
     # Connect Spine <-> Leaf
     spine_quantity = 0
     leaf_quantity = 0
+    spine_leaf_interfaces = {}
+    leaf_uplink_interfaces = {}
+    spine_peer_interfaces = {}
+    leaf_peer_interfaces = {}
     for topology_element in topology_elements:
         if not topology_element.device_type:
             log.info(f"No device_type for {topology_element.name.value} - Ignored")
@@ -501,74 +505,163 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
 
         if device_role_name == "spine":
             spine_quantity = topology_element.quantity.value
+            spine_leaf_interfaces = get_interface_names(device_type=device_type_name, device_role="spine", interface_role="leaf")
+            spine_peer_interfaces = get_interface_names(device_type=device_type_name, device_role="spine", interface_role="peer")
         elif device_role_name == "leaf":
             leaf_quantity = topology_element.quantity.value
+            leaf_uplink_interfaces = get_interface_names(device_type=device_type_name, device_role="leaf", interface_role="uplink")
+            leaf_peer_interfaces = get_interface_names(device_type=device_type_name, device_role="leaf", interface_role="peer")
 
-        #   ---------- Cabling Logic    ----------
-        #   odd number lf1 uplink port <-> sp1 odd number leaf port
-        #   even number lf1 uplink port <-> sp2 odd number leaf port
-        #   odd number lf2 uplink port <-> sp1 even number leaf port
-        #   even number lf2 uplink port <-> sp2 even number leaf port
-        #   odd number lf1 peer port <-> lf2 odd number peer port
-        #   even number lf1 peer port <-> lf2 even number peer port
-        spine_leaf_interfaces = get_interface_names(device_type=device_type_name, device_role="spine", interface_role="leaf")
-        leaf_uplink_interfaces = get_interface_names(device_type=device_type_name, device_role="leaf", interface_role="uplink")
-        for leaf_idx in range(1, leaf_quantity + 1):
-            if leaf_idx > len(spine_leaf_interfaces):
-                log.error(f"The quantity of leaf requested ({leaf_quantity}) is superior to the number of interfaces flagged as 'leaf' ({len(spine_leaf_interfaces)})")
+    #   ---------- Cabling Logic    ----------
+    #   odd number lf1 uplink port <-> sp1 odd number leaf port
+    #   even number lf1 uplink port <-> sp2 odd number leaf port
+    #   odd number lf2 uplink port <-> sp1 even number leaf port
+    #   even number lf2 uplink port <-> sp2 even number leaf port
+    #   odd number lf1 peer port <-> lf2 odd number peer port
+    #   even number lf1 peer port <-> lf2 even number peer port
+
+    # Cabling Spines <-> Leaf
+    if not spine_leaf_interfaces or not leaf_uplink_interfaces:
+        log.error("No 'uplink' interfaces found on leaf or no 'leaf' interfaces on spines")
+        return None
+
+    for leaf_idx in range(1, leaf_quantity + 1):
+        if leaf_idx > len(spine_leaf_interfaces):
+            log.error(f"The quantity of leaf requested ({leaf_quantity}) is superior to the number of interfaces flagged as 'leaf' ({len(spine_leaf_interfaces)})")
+            break
+        # Calculate the good interfaces based on the Cabling Logic above
+        leaf_pair_num = (leaf_idx + 1) // 2
+        if leaf_pair_num == 1:
+            if len(spine_leaf_interfaces) < 2:
+                continue
+            spine_port = spine_leaf_interfaces[0] if leaf_idx % 2 != 0 else spine_leaf_interfaces[1]
+        else:
+            offset = (leaf_pair_num - 1) * 2
+            if len(spine_leaf_interfaces) < offset + 1 :
+                continue
+            spine_port = spine_leaf_interfaces[offset] if leaf_idx % 2 != 0 else spine_leaf_interfaces[offset + 1]
+
+        for spine_idx in range(1, spine_quantity + 1):
+            if spine_idx > len(leaf_uplink_interfaces):
+                log.error(f"The quantity of spines requested ({spine_quantity}) is superior to the number of interfaces flagged as 'uplink' ({len(leaf_uplink_interfaces)})")
                 break
-            # Calculate the good interfaces based on the Cabling Logic above
-            leaf_pair_num = (leaf_idx + 1) // 2
-            if leaf_pair_num == 1:
-                if len(spine_leaf_interfaces) < 2:
+
+            spine_pair_num = (spine_idx + 1) // 2
+            if spine_pair_num == 1:
+                if len(leaf_uplink_interfaces) < 2:
                     continue
-                spine_port = spine_leaf_interfaces[0] if leaf_idx % 2 != 0 else spine_leaf_interfaces[1]
+                uplink_port = leaf_uplink_interfaces[0] if spine_idx % 2 != 0 else leaf_uplink_interfaces[1]
             else:
-                offset = (leaf_pair_num - 1) * 2
-                if len(spine_leaf_interfaces) < offset + 1 :
+                offset = (spine_pair_num - 1) * 2
+                if len(leaf_uplink_interfaces) < offset + 1 :
                     continue
-                spine_port = spine_leaf_interfaces[offset] if leaf_idx % 2 != 0 else spine_leaf_interfaces[offset + 1]
-
-            for spine_idx in range(1, spine_quantity + 1):
-                if spine_idx > len(leaf_uplink_interfaces):
-                    log.error(f"The quantity of spines requested ({spine_quantity}) is superior to the number of interfaces flagged as 'uplink' ({len(leaf_uplink_interfaces)})")
-                    break
-
-                spine_pair_num = (spine_idx + 1) // 2
-                if spine_pair_num == 1:
-                    if len(leaf_uplink_interfaces) < 2:
-                        continue
-                    uplink_port = leaf_uplink_interfaces[0] if spine_idx % 2 != 0 else leaf_uplink_interfaces[1]
+                if spine_idx % 2 != 0:
+                    uplink_port = leaf_uplink_interfaces[offset]
                 else:
-                    offset = (spine_pair_num - 1) * 2
-                    if len(leaf_uplink_interfaces) < offset + 1 :
-                        continue
-                    if spine_idx % 2 != 0:
-                        uplink_port = leaf_uplink_interfaces[offset]
-                    else:
-                        uplink_port = leaf_uplink_interfaces[offset + 1]
+                    uplink_port = leaf_uplink_interfaces[offset + 1]
 
-                # Retrieve interfaces from store (as we create them above) #{location_name}-{topology_name}-{device_role_name}
-                intf_spine_obj = store.get(kind="InfraInterfaceL3", key=f"{location_name}-{topology_name}-spine{spine_idx}-{spine_port}")
-                intf_leaf_obj = store.get(kind="InfraInterfaceL3", key=f"{location_name}-{topology_name}-leaf{leaf_idx}-{uplink_port}")
+            # Retrieve interfaces from store (as we create them above) #{location_name}-{topology_name}-{device_role_name}
+            intf_spine_obj = store.get(kind="InfraInterfaceL3", key=f"{location_name}-{topology_name}-spine{spine_idx}-{spine_port}")
+            intf_leaf_obj = store.get(kind="InfraInterfaceL3", key=f"{location_name}-{topology_name}-leaf{leaf_idx}-{uplink_port}")
 
-                new_spine_intf_description = intf_spine_obj.description.value + f" to {intf_leaf_obj.description.value.split(':', 1)[1].strip()}"
-                new_leaf_intf_description = intf_leaf_obj.description.value + f" to {intf_spine_obj.description.value.split(':', 1)[1].strip()}"
+            new_spine_intf_description = intf_spine_obj.description.value + f" to {intf_leaf_obj.description.value.split(':', 1)[1].strip()}"
+            spine_ico_ip_description = intf_spine_obj.description.value
+            new_leaf_intf_description = intf_leaf_obj.description.value + f" to {intf_spine_obj.description.value.split(':', 1)[1].strip()}"
+            leaf_ico_ip_description = intf_leaf_obj.description.value
 
-                # Update Spine interface (description, endpoints, status)
-                intf_spine_obj.description.value = new_spine_intf_description
-                intf_spine_obj.status.value = ACTIVE_STATUS
-                intf_spine_obj.connected_endpoint = intf_leaf_obj
-                await intf_spine_obj.save()
+            interconnection = list(next(location_technical_net_pool).hosts())
+            spine_ip = f"{str(interconnection[0])}/31"
+            leaf_ip = f"{str(interconnection[1])}/31"
+            await upsert_ip_address(
+                        client=client,
+                        log=log,
+                        branch=branch,
+                        interface_obj=intf_spine_obj,
+                        description=spine_ico_ip_description,
+                        account_pop_id=account_pop.id,
+                        address=spine_ip,
+                        store=store
+                        )
+            await upsert_ip_address(
+                        client=client,
+                        log=log,
+                        branch=branch,
+                        interface_obj=intf_leaf_obj,
+                        description=leaf_ico_ip_description,
+                        account_pop_id=account_pop.id,
+                        address=leaf_ip,
+                        store=store
+                        )
+            # Update Spine interface (description, endpoints, status)
+            intf_spine_obj.description.value = new_spine_intf_description
+            intf_spine_obj.status.value = ACTIVE_STATUS
+            intf_spine_obj.connected_endpoint = intf_leaf_obj
+            await intf_spine_obj.save()
 
-                # Update Leaf interface (description, endpoints, status)
-                intf_leaf_obj.description.value = new_leaf_intf_description
-                intf_leaf_obj.status.value  = ACTIVE_STATUS
-                intf_leaf_obj.connected_endpoint = intf_spine_obj
-                await intf_leaf_obj.save()
-                log.info(f"- Connected {location_name}-{topology_name}-leaf{leaf_idx}-{uplink_port} to {location_name}-{topology_name}-spine{spine_idx}-{spine_port}")
+            # Update Leaf interface (description, endpoints, status)
+            intf_leaf_obj.description.value = new_leaf_intf_description
+            intf_leaf_obj.status.value  = ACTIVE_STATUS
+            intf_leaf_obj.connected_endpoint = intf_spine_obj
+            await intf_leaf_obj.save()
+            log.info(f"- Connected {location_name}-{topology_name}-leaf{leaf_idx}-{uplink_port} to {location_name}-{topology_name}-spine{spine_idx}-{spine_port}")
 
+    # Cabling Spines <-> Spines & Leaf <-> Leaf
+    if not spine_peer_interfaces or not leaf_peer_interfaces:
+        log.error("No 'peer' interfaces found on Leaf or Spines")
+        return None
+
+    if leaf_quantity % 2 != 0 or spine_quantity % 2 != 0:
+        log.error("The number of devices must be even to form pairs")
+        return None
+
+    for leaf_idx in range(1, leaf_quantity + 1, 2):
+        leaf1_name = f"{location_name}-{topology_name}-leaf{leaf_idx}"
+        leaf2_name = f"{location_name}-{topology_name}-leaf{leaf_idx + 1}"
+        for leaf_peer_interface in leaf_peer_interfaces:
+            intf_leaf1_obj = store.get(kind="InfraInterfaceL3", key=f"{leaf1_name}-{leaf_peer_interface}")
+            intf_leaf2_obj = store.get(kind="InfraInterfaceL3", key=f"{leaf2_name}-{leaf_peer_interface}")
+
+            new_leaf1_intf_description = intf_leaf1_obj.description.value + f" to {intf_leaf2_obj.description.value.split(':', 1)[1].strip()}"
+            new_leaf2_intf_description = intf_leaf2_obj.description.value + f" to {intf_leaf1_obj.description.value.split(':', 1)[1].strip()}"
+
+            # Update Leaf1 interface (description, endpoints, status)
+            intf_leaf1_obj.description.value = new_leaf1_intf_description
+            intf_leaf1_obj.status.value = ACTIVE_STATUS
+            intf_leaf1_obj.connected_endpoint = intf_leaf2_obj
+            await intf_leaf1_obj.save()
+            # Update Leaf2 interface (description, endpoints, status)
+            intf_leaf2_obj.description.value = new_leaf2_intf_description
+            intf_leaf2_obj.status.value = ACTIVE_STATUS
+            intf_leaf2_obj.connected_endpoint = intf_leaf1_obj
+            await intf_leaf2_obj.save()
+
+    for spine_idx in range(1, spine_quantity + 1, 2):
+        spine1_name = f"{location_name}-{topology_name}-spine{spine_idx}"
+        spine2_name = f"{location_name}-{topology_name}-spine{spine_idx + 1}"
+        for spine_peer_interface in spine_peer_interfaces:
+            intf_spine1_obj = store.get(kind="InfraInterfaceL3", key=f"{spine1_name}-{spine_peer_interface}")
+            intf_spine2_obj = store.get(kind="InfraInterfaceL3", key=f"{spine2_name}-{spine_peer_interface}")
+
+            new_spine1_intf_description = intf_spine1_obj.description.value + f" to {intf_spine2_obj.description.value.split(':', 1)[1].strip()}"
+            new_spine2_intf_description = intf_spine2_obj.description.value + f" to {intf_spine1_obj.description.value.split(':', 1)[1].strip()}"
+
+            # Update Spine1 interface (description, endpoints, status)
+            intf_spine1_obj.description.value = new_spine1_intf_description
+            intf_spine1_obj.status.value = ACTIVE_STATUS
+            intf_spine1_obj.connected_endpoint = intf_spine2_obj
+            await intf_spine1_obj.save()
+            # Update Spine2 interface (description, endpoints, status)
+            intf_spine2_obj.description.value = new_spine2_intf_description
+            intf_spine2_obj.status.value = ACTIVE_STATUS
+            intf_spine2_obj.connected_endpoint = intf_spine1_obj
+            await intf_spine2_obj.save()
+
+    #   ---------- iBGP Logic    ----------
     # Create iBGP Sessions within the Site
+    # TODO
+
+    #   ---------- Network Services    ----------
+    # Create Network Services for the topology
     # TODO
 
     return location_name

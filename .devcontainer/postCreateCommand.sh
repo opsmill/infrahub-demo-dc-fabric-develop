@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# Load infra-schema
-docker compose run infrahub-git infrahubctl schema load /source/models/infrastructure_base.yml
+# Load infra-schema + infra-topology
+poetry run infrahubctl schema load models
 
 # Load infra-data
-# docker compose -p infrahub run infrahub-git infrahubctl run /tmp/models/infrastructure_base.py
-# docker compose -p infrahub run infrahub-git infrahubctl run /tmp/models/infrastructure_edge.py
+poetry run infrahubctl run generator/create_basic.py
+poetry run infrahubctl run generator/create_location.py
+poetry run infrahubctl run generator/create_topology.py

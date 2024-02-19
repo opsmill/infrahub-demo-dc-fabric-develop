@@ -533,13 +533,13 @@ files = [
 
 [[package]]
 name = "infrahub-sdk"
-version = "0.6.0"
+version = "0.7.0"
 description = "Python Client to interact with Infrahub"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "infrahub_sdk-0.6.0-py3-none-any.whl", hash = "sha256:65ee65eac03f0e032f535e3991ddfeaed7d0312d627f76489d170b500987a9ae"},
-    {file = "infrahub_sdk-0.6.0.tar.gz", hash = "sha256:f4538e8ca6e8644fd08be70bc1c727a944d0651ba73435f73e63fae12df9a33a"},
+    {file = "infrahub_sdk-0.7.0-py3-none-any.whl", hash = "sha256:bae4b1430b1f6e025ecea86bc21913f4acb12751caf5096e3334c32348ce7ba5"},
+    {file = "infrahub_sdk-0.7.0.tar.gz", hash = "sha256:a6c7b06b1953c5aa305955f2e974e92546b9dada36e844377288b2623b13c30f"},
 ]
 
 [package.dependencies]
@@ -553,6 +553,7 @@ numpy = {version = ">=1.24.2,<2.0.0", markers = "python_version >= \"3.8\" and p
 pendulum = {version = ">=2.1", markers = "python_version >= \"3.8\" and python_version < \"3.12\""}
 pyarrow = ">=14.0.1,<15.0.0"
 pydantic = ">=1.7.4,<1.8 || >1.8,<1.8.1 || >1.8.1,<2.0.0 || >2.0.0,<2.0.1 || >2.0.1,<2.1.0 || >2.1.0,<3.0.0"
+pytest = "*"
 pyyaml = ">=6.0,<7.0"
 rich = ">=13.3,<14.0"
 toml = ">=0.10.2,<0.11.0"
@@ -1772,4 +1773,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10, < 3.12"
-content-hash = "6b6784372c5a644cf6e92e7bc58999159b9380bdfaab0e1de5366101b118b050"
+content-hash = "11c0f24c1c381df27ce9b314b6eb27b23147058c9acc5d30233e3937f5ffbbed"
