@@ -7,12 +7,12 @@ class InfrahubCheckDeviceTopology(InfrahubCheck):
 
     query = "check_device_topology"
 
-    def validate(self):
+    def validate(self, data):
 
         site_device_roles = defaultdict(list)
         site_expected_device_roles = defaultdict(dict) 
 
-        for device in self.data["data"]["InfraDevice"]["edges"]:
+        for device in data["data"]["InfraDevice"]["edges"]:
             role = device["node"]["role"]["value"]
             site = device["node"]["site"]["node"]["name"]["value"]
             site_device_roles[site].append(role)
@@ -20,7 +20,7 @@ class InfrahubCheckDeviceTopology(InfrahubCheck):
         for site in site_device_roles.keys(): 
             site_device_roles[site] = Counter(site_device_roles[site])
 
-        for topology in self.data["data"]["TopologyTopology"]["edges"]:
+        for topology in data["data"]["TopologyTopology"]["edges"]:
             if not topology["node"]["location"]["node"]:
                 continue
             site = topology["node"]["location"]["node"]["name"]["value"]
