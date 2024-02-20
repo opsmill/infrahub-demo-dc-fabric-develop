@@ -212,6 +212,15 @@ nodes:
     label: "Region"
     inherit_from: ["LocationGeneric"]
     parent: ""
+    children: "LocationCountry"
+  - name: Country
+    namespace: Location
+    icon: "gis:search-country"
+    include_in_menu: true
+    menu_placement: "LocationGeneric"
+    label: "Country"
+    inherit_from: ["LocationGeneric"]
+    parent: "LocationRegion"
     children: "LocationSite"
   - name: Site
     namespace: Location
@@ -220,7 +229,7 @@ nodes:
     menu_placement: "LocationGeneric"
     label: "Site"
     inherit_from: ["LocationGeneric"]
-    parent: "LocationRegion"
+    parent: "LocationCountry"
     children: "LocationRack"
   - name: Rack
     namespace: Location

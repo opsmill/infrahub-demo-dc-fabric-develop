@@ -94,14 +94,13 @@ async def create_topology(client: InfrahubClient, log: logging.Logger, branch: s
             )
         log.info(f"- Add {topology_name} to {topology_group.name.value} CoreStandardGroup")
 
-        if topology[2] is None:
-            continue
-        topology_location_object = store.get(key=topology[2])
-        if topology_location_object:
-            topology_object = store.get(key=topology_name, kind="TopologyTopology")
-            topology_object.location = topology_location_object
-            await topology_object.save()
-        log.info(f"- Add {topology_name} to {topology_location_object.name.value} Location")
+        if topology[2]:
+            topology_location_object = store.get(key=topology[2])
+            if topology_location_object:
+                topology_object = store.get(key=topology_name, kind="TopologyTopology")
+                topology_object.location = topology_location_object
+                await topology_object.save()
+            log.info(f"- Add {topology_name} to {topology_location_object.name.value} Location")
 
         # ------------------------------------------
         # Create Topology Elements

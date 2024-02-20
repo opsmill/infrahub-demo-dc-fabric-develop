@@ -13,11 +13,14 @@ from utils import group_add_member, populate_local_store, upsert_object
 
 LOCATIONS = {
     # Name, Type, Parent
-    ("usa", "region", None),
+    ("north-america", "region", None),
+    ("united states", "country",  "north-america"),
     ("atl", "site", "usa"),
     ("atl-rack1", "rack", "atl"),
     ("ord", "site", "usa"),
     ("europe", "region", None),
+    ("netherlands", "country", "europe"),
+    ("germany", "country", "europe"),
     ("ams", "site", "europe"),
     ("fra", "site", "europe"),
 }
