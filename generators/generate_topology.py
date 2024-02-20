@@ -340,7 +340,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 "name": {"value": device_name, "source": account_pop.id, "is_protected": True},
                 "site": {"id": location_id, "source": account_pop.id, "is_protected": True},
                 "status": {"value": ACTIVE_STATUS, "owner": account_ops.id},
-                "type": {"value": device_type_name, "source": account_pop.id},
+                "device_type": {"id": device_type.id, "source": account_pop.id},
                 "role": {"value": device_role_name, "source": account_pop.id, "is_protected": True, "owner": account_eng.id},
                 "asn": {"id": internal_as.id, "source": account_pop.id, "is_protected": True, "owner": account_eng.id},
                 "platform": {"id": platform_id, "source": account_pop.id, "is_protected": True}
@@ -355,6 +355,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 store=store,
                 retrived_on_failure=True
                 )
+
             # Add device to groups
             platform_group_name = f"{platform.name.value.lower().split(' ', 1)[0]}_devices"
             platform_group = store.get(key=platform_group_name, kind="CoreStandardGroup")
@@ -809,15 +810,11 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs
                 log=log
                 )
         except ValueError:
-            if topology_name and topology_name == topology.name.value:
-                log.info(f"{topology.name.value} is not associated with a site.")
-            elif not topology_name:
-                log.info(f"{topology.name.value} is not associated with a site.")
             continue
 
     if batch.num_tasks < 1:
         if topology_name:
-            log.info(f"{topology_name} doesn't exist")
+            log.info(f"{topology_name} doesn't exist or is not associated with a site")
         else:
             log.info(f"No Topologies found")
     else:
