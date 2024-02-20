@@ -37,6 +37,12 @@ generics:
         peer: InfraDevice
         cardinality: many
         optional: true
+      - name: network_management
+        label: "Network Management Servers"
+        peer: NetworkMangementServer
+        optional: true
+        cardinality: many
+        kind: Component
   - name: Interface
     namespace: Infra
     description: "Generic Network Interface."
@@ -149,7 +155,53 @@ generics:
         cardinality: one
         kind: Attribute
         identifier: connected__endpoint
-
+  - name: MangementServer
+    namespace: Network
+    description: "Generic model for network management server (dns, ntp, and dhcp)."
+    label: "Network Management Servers"
+    default_filter: name__value
+    display_labels: [name__value]
+    order_by: [name__value]
+    include_in_menu: true
+    menu_placement: "TopologyTopology"
+    attributes:
+      - name: name
+        kind: Text
+        order_weight: 1000
+      - name: description
+        kind: Text
+        order_weight: 1100
+        optional: true
+      - name: status
+        kind: Dropdown
+        choices:
+          - name: active
+            label: Active
+            description: "Fully operational and currently in service."
+            color: "#7fbf7f"
+          - name: provisionning
+            label: Provisioning
+            description: "In the process of being set up and configured."
+            color: "#ffff7f"
+          - name: maintenance
+            label: Maintenance
+            description: "Undergoing routine maintenance or repairs."
+            color: "#ffd27f"
+          - name: drained
+            label: Drained
+            description: "Temporarily taken out of service."
+            color: "#bfbfbf"
+    relationships:
+      - name: topology
+        peer: TopologyTopology
+        optional: true
+        cardinality: one
+        kind: Parent
+      - name: ip_addresses
+        peer: InfraIPAddress
+        optional: true
+        cardinality: many
+        kind: Component
 nodes:
   # --------------------  Locations  --------------------
   - name: Region
@@ -729,6 +781,10 @@ nodes:
         optional: true
         cardinality: one
         kind: Parent
+      - name: prefix
+        peer: InfraPrefix
+        optional: true
+        cardinality: one
   - name: VLAN
     namespace: Infra
     description: "A VLAN is isolated layer two domain"
@@ -863,7 +919,83 @@ nodes:
         order_weight: 1500
       - name: ip_addresses
         peer: InfraIPAddress
-        # identifier: "prefix__address"
         cardinality: many
         kind: Component
         order_weight: 1600
+
+  # --------------------  Network Management  --------------------
+  - name: DHCPOption
+    namespace: Network
+    description: "Represents a configurable option within a DHCP server."
+    label: "DHCP Option"
+    icon: "gis:globe-options"
+    menu_placement: "NetworkMangementServer"
+    include_in_menu: false
+    default_filter: name__value
+    display_labels: [name__value]
+    order_by: [name__value]
+    attributes:
+      - name: name
+        kind: Text
+        order_weight: 1000
+      - name: description
+        kind: Text
+        optional: true
+        order_weight: 1100
+      - name: option_code
+        kind: Number
+        order_weight: 2000
+      - name: content
+        kind: Text
+        order_weight: 2100
+
+  - name: DHCPServer
+    namespace: Network
+    description: "Represents a DHCP server in the network."
+    label: "DHCP Server"
+    icon: "eos-icons:ip"
+    menu_placement: "NetworkMangementServer"
+    include_in_menu: false
+    default_filter: name__value
+    display_labels: [name__value]
+    order_by: [name__value]
+    inherit_from:
+      - NetworkMangementServer
+    attributes:
+      - name: lease_time
+        kind: Text
+        order_weight: 2100
+    relationships:
+      - name: dhcp_options
+        peer: NetworkDHCPOption
+        optional: true
+        cardinality: many
+        kind: Component
+
+  - name: NameServer
+    namespace: Network
+    description: "Represents a DNS server in the network."
+    label: "DNS Server"
+    icon: "eos-icons:dns"
+    menu_placement: "NetworkMangementServer"
+    default_filter: name__value
+    display_labels: [name__value]
+    order_by: [name__value]
+    inherit_from:
+      - NetworkMangementServer
+
+  - name: NTPServer
+    namespace: Network
+    description: "Represents a NTP server in the network."
+    label: "NTP Server"
+    icon: "iconoir:time-zone"
+    menu_placement: "NetworkMangementServer"
+    default_filter: name__value
+    display_labels: [name__value]
+    order_by: [name__value]
+    inherit_from:
+      - NetworkMangementServer
+    attributes:
+      - name: stratum_level
+        kind: Number
+        order_weight: 2000

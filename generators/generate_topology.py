@@ -33,18 +33,20 @@ INTERFACE_LOOP_NAME = {
 DEVICES_INTERFACES = {
     # Device Type [ Interfaces ]
     "QFX5110-48S-S": [
-        "Ethernet1",
-        "Ethernet2",
-        "Ethernet3",
-        "Ethernet4",
-        "Ethernet5",
-        "Ethernet6",
-        "Ethernet7",
-        "Ethernet8",
-        "Ethernet9",
-        "Ethernet10",
-        "Ethernet11",
-        "Ethernet12",
+        "xe-0/0/0",
+        "xe-0/0/1",
+        "xe-0/0/2",
+        "xe-0/0/3",
+        "xe-0/0/4",
+        "xe-0/0/5",
+        "xe-0/0/6",
+        "xe-0/0/7",
+        "xe-0/0/8",
+        "xe-0/0/9",
+        "xe-0/0/10",
+        "xe-0/0/11",
+        "xe-0/0/12",
+        "xe-0/0/13",
     ],
     "CCS-720DP-48S-2F": [
         "Ethernet1",
@@ -59,6 +61,8 @@ DEVICES_INTERFACES = {
         "Ethernet10",
         "Ethernet11",
         "Ethernet12",
+        "Ethernet13",
+        "Ethernet14",
     ],
     "NCS-5501-SE": [
         "Ethernet1",
@@ -73,6 +77,8 @@ DEVICES_INTERFACES = {
         "Ethernet10",
         "Ethernet11",
         "Ethernet12",
+        "Ethernet13",
+        "Ethernet14",
     ],
     "ASR1002-HX": [
         "Ethernet1",
@@ -87,6 +93,8 @@ DEVICES_INTERFACES = {
         "Ethernet10",
         "Ethernet11",
         "Ethernet12",
+        "Ethernet13",
+        "Ethernet14",
     ]
 }
 
@@ -99,26 +107,30 @@ INTERFACE_ROLES_MAPPING = {
         "leaf",     # Ethernet4  - leaf4 (L3)
         "leaf",     # Ethernet5  - leaf5 (L3)
         "leaf",     # Ethernet6  - leaf6 (L3)
-        "spare",    # Ethernet7
-        "spare",    # Ethernet8
+        "leaf",     # Ethernet7  - leaf7 (L3)
+        "leaf",     # Ethernet8  - leaf8 (L3)
         "peer",     # Ethernet9  - spine (L2)
         "peer",     # Ethernet10 - spine (L2)
         "transit",  # Ethernet11
         "transit",  # Ethernet12
+        "spare",    # Ethernet13
+        "spare",    # Ethernet14
     ],
     "leaf": [
         "server",   # Ethernet1
         "server",   # Ethernet2
         "server",   # Ethernet3
         "server",   # Ethernet4
-        "spare",    # Ethernet5
-        "spare",    # Ethernet6
-        "peer",     # Ethernet7  - leaf (L2)
+        "server",   # Ethernet5
+        "server",   # Ethernet6
+        "spare",    # Ethernet7
         "peer",     # Ethernet8  - leaf (L2)
-        "uplink",   # Ethernet9  - spine1 (L3)
-        "uplink",   # Ethernet10 - spine2 (L3)
-        "uplink",   # Ethernet11 - spine3 (L3)
-        "uplink",   # Ethernet12 - spine4 (L3)
+        "peer",     # Ethernet9  - leaf (L2)
+        "uplink",   # Ethernet10 - spine1 (L3)
+        "uplink",   # Ethernet11 - spine2 (L3)
+        "uplink",   # Ethernet12 - spine3 (L3)
+        "uplink",   # Ethernet13 - spine4 (L3)
+        "spare",    # Ethernet14
     ]
 }
 
@@ -194,13 +206,20 @@ async def upsert_ip_address(
         client: InfrahubClient,
         log: logging.Logger,
         branch: str,
+        prefix_obj : InfrahubNode,
+        device_name: str,
         interface_obj: InfrahubNode,
         description: str,
         account_pop_id: str,
         address: str,
         store: NodeStore
         ) -> None:
+    if prefix_obj:
+        prefix_id = prefix_obj.id
+    else:
+        prefix_id = None
     data = {
+        "prefix": {"id": prefix_id, "source": account_pop_id},
         "interface": {"id": interface_obj.id, "source": account_pop_id},
         "description": {"value": description},
         "address": {"value": address, "source": account_pop_id},
@@ -209,7 +228,7 @@ async def upsert_ip_address(
         client=client,
         log=log,
         branch=branch,
-        object_name=f"{interface_obj.name.value}-address",
+        object_name=f"{device_name}-{interface_obj.name.value}-address",
         kind_name="InfraIPAddress",
         data=data,
         store=store,
@@ -254,9 +273,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
     location_id = topology.location.peer.id
     location_name = topology.location.peer.name.value
 
-    log.info(f"{topology_name} is assigned to {location_name}.")
-
-
+    log.debug(f"{topology_name} is assigned to {location_name}.")
 
     # --------------------------------------------------
     # Preparating some variables for the Location
@@ -264,6 +281,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
     account_pop = store.get(key="pop-builder", kind="CoreAccount")
     account_eng = store.get(key="Engineering Team", kind="CoreAccount")
     account_ops = store.get(key="Operation Team", kind="CoreAccount")
+    orga_duff = store.get(key="Duff", kind="CoreOrganization")
 
     # We are using DUFF Oragnization ASN as "internal" (AS64496)
     internal_as = store.get(key="AS64496", kind="InfraAutonomousSystem")
@@ -285,26 +303,22 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
 
     for prefix in locations_subnets:
         if prefix.role.value == "management":
-            location_mgmt_net_pool.append(prefix.prefix.value)
+            location_mgmt_net_pool.append(prefix)
         elif prefix.role.value == "technical":
-            location_technical_net_pool.append(prefix.prefix.value)
+            location_technical_net_pool.append(prefix)
         elif prefix.role.value == "loopback":
-            location_loopback_net_pool.append(prefix.prefix.value)
+            location_loopback_net_pool.append(prefix)
         elif prefix.role.value == "public":
-            location_external_net.append(prefix.prefix.value)
+            location_external_net.append(prefix)
 
-    # --------------------------------------------------
-    # Generate the topology
+    #   -------------------- Devices Generation --------------------
     #   - Create Devices
     #   - Create Devices Interfaces
     #   - Add IP to external facing L3 Interfaces
-    #   - Add Cable between Topology Elements
-    # --------------------------------------------------
-    # Generate the Devices From the topology
 
-    loopback_address_pool = location_loopback_net_pool[0].hosts()
-    mgmt_address_pool = location_mgmt_net_pool[0].hosts()
-    location_external_net_pool_iter = iter(list(location_external_net[0].subnets(new_prefix=31)))
+    loopback_address_pool = location_loopback_net_pool[0].prefix.value.hosts()
+    mgmt_address_pool = location_mgmt_net_pool[0].prefix.value.hosts()
+    location_external_net_pool_iter = iter(list(location_external_net[0].prefix.value.subnets(new_prefix=31)))
     topology_elements = await client.filters(kind="TopologyPhysicalElement", topology__ids=topology.id, populate_store=True, prefetch_relationships=True)
 
     for topology_element in topology_elements:
@@ -338,19 +352,27 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 object_name=device_name,
                 kind_name="InfraDevice",
                 data=data,
-                store=store
+                store=store,
+                retrived_on_failure=True
                 )
-
             # Add device to groups
-            # platform_group_name = f"{platform.name.value.lower().split(' ', 1)[0]}_devices"
-            # platform_group = store.get(key=platform_group_name, kind="CoreStandardGroup")
-            # await group_add_member(
-            #     client=client,
-            #     group=platform_group,
-            #     members=[device_obj],
-            #     branch=branch
-            #     )
-            # log.info(f"- Add {device_name} to {platform_group_name} CoreStandardGroup")
+            platform_group_name = f"{platform.name.value.lower().split(' ', 1)[0]}_devices"
+            platform_group = store.get(key=platform_group_name, kind="CoreStandardGroup")
+            await group_add_member(
+                client=client,
+                group=platform_group,
+                members=[device_obj],
+                branch=branch
+                )
+            log.info(f"- Add {device_name} to {platform_group_name} CoreStandardGroup")
+            topology_group = store.get(key=f"{topology_name}_topology", kind="CoreStandardGroup")
+            await group_add_member(
+                client=client,
+                group=topology_group,
+                members=[device_obj],
+                branch=branch
+                )
+            log.info(f"- Add {device_name} to {topology_group} CoreStandardGroup")
 
             # FIXME  Interface name is not unique, upsert() is not good enough for indempotency. Need constraints
             DEVICE_INTERFACE_OBJS[device_name] = await client.filters(kind="InfraInterfaceL3", device__name__value=device_name, branch=branch)
@@ -382,6 +404,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 client=client,
                 log=log,
                 branch=branch,
+                prefix_obj=location_loopback_net_pool[0],
+                device_name=device_name,
                 interface_obj=loopback_obj,
                 description=loopback_description,
                 account_pop_id=account_pop.id,
@@ -415,6 +439,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 client=client,
                 log=log,
                 branch=branch,
+                prefix_obj=location_mgmt_net_pool[0],
+                device_name=device_name,
                 interface_obj=mgmt_obj,
                 description=mgmt_description,
                 account_pop_id=account_pop.id,
@@ -424,8 +450,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
 
             # Set Mgmt IP as Primary IP
             device_obj.primary_address = ip_mgmt_obj
-            await device_obj.save(allow_upsert=True)
-            store.set(key="device_name", node=device_obj)
+            await device_obj.save()
+            store.set(key=f"{device_name}", node=device_obj)
             log.info(f"- Set {ip_mgmt} as {device_name} Primary IP")
 
             if device_role_name.lower() not in ["spine", "leaf"]:
@@ -470,17 +496,19 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 )
 
                 # Creation IP for some L3 Interface
+                # FIXME Get back the prefix reference
                 if intf_role in ["upstream", "transit"]:
                     ico_hosts = list(next(location_external_net_pool_iter).hosts())
                     address = f"{str(ico_hosts[0])}/31"
                     # peer_address = f"{str(ico_hosts[1])}/31"
                     if not address:
                         continue
-                    ip_mgmt = f"{str(next(mgmt_address_pool))}/24"
                     await upsert_ip_address(
                         client=client,
                         log=log,
                         branch=branch,
+                        prefix_obj=None,
+                        device_name=device_name,
                         interface_obj=interface_obj,
                         description=interface_description,
                         account_pop_id=account_pop.id,
@@ -488,7 +516,9 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                         store=store
                         )
 
-    # Connect Spine <-> Leaf
+    #   -------------------- Connect Spines & Leafs --------------------
+    #   - Cabling Spines to Leaf, Leaf to Leaf, Spine to Spine
+    #   - Add ico IP to Spines <-> Leafs
     spine_quantity = 0
     leaf_quantity = 0
     spine_leaf_interfaces = {}
@@ -512,7 +542,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
             leaf_uplink_interfaces = get_interface_names(device_type=device_type_name, device_role="leaf", interface_role="uplink")
             leaf_peer_interfaces = get_interface_names(device_type=device_type_name, device_role="leaf", interface_role="peer")
 
-    #   ---------- Cabling Logic    ----------
+    #   ---  Cabling Logic  ---
     #   odd number lf1 uplink port <-> sp1 odd number leaf port
     #   even number lf1 uplink port <-> sp2 odd number leaf port
     #   odd number lf2 uplink port <-> sp1 even number leaf port
@@ -524,6 +554,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
     if not spine_leaf_interfaces or not leaf_uplink_interfaces:
         log.error("No 'uplink' interfaces found on leaf or no 'leaf' interfaces on spines")
         return None
+
+    interconnection_subnets = IPv4Network(next(iter(location_technical_net_pool)).prefix.value).subnets(new_prefix=31)
 
     for leaf_idx in range(1, leaf_quantity + 1):
         if leaf_idx > len(spine_leaf_interfaces):
@@ -560,22 +592,45 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 else:
                     uplink_port = leaf_uplink_interfaces[offset + 1]
 
-            # Retrieve interfaces from store (as we create them above) #{topology_name}-{device_role_name}
-            intf_spine_obj = store.get(kind="InfraInterfaceL3", key=f"{topology_name}-spine{spine_idx}-{spine_port}")
-            intf_leaf_obj = store.get(kind="InfraInterfaceL3", key=f"{topology_name}-leaf{leaf_idx}-{uplink_port}")
+            # Retrieve interfaces from infrahub (as we create them above) #{topology_name}-{device_role_name}
+            intf_spine_obj = await client.get(kind="InfraInterfaceL3", name__value=spine_port, device__name__value=f"{topology_name}-spine{spine_idx}")
+            intf_leaf_obj = await client.get(kind="InfraInterfaceL3", name__value=uplink_port, device__name__value=f"{topology_name}-leaf{leaf_idx}")
+            # store.get(kind="InfraInterfaceL3", key=f"{topology_name}-leaf{leaf_idx}-{uplink_port}")
 
             new_spine_intf_description = intf_spine_obj.description.value + f" to {intf_leaf_obj.description.value.split(':', 1)[1].strip()}"
             spine_ico_ip_description = intf_spine_obj.description.value
             new_leaf_intf_description = intf_leaf_obj.description.value + f" to {intf_spine_obj.description.value.split(':', 1)[1].strip()}"
             leaf_ico_ip_description = intf_leaf_obj.description.value
 
-            interconnection = list(next(iter(location_technical_net_pool)).hosts())
-            spine_ip = f"{str(interconnection[0])}/31"
-            leaf_ip = f"{str(interconnection[1])}/31"
+            interconnection_subnet = next(interconnection_subnets)
+            interconnection_ips = list(interconnection_subnet.hosts())
+            spine_ip = f"{str(interconnection_ips[0])}/31"
+            leaf_ip = f"{str(interconnection_ips[1])}/31"
+            prefix_description = f"{location_name.upper()}-ico-{IPv4Network(interconnection_subnet).network_address}"
+            data = {
+                "prefix":  {"value": IPv4Network(interconnection_subnet) },
+                "description": {"value": prefix_description},
+                "organization": {"id": orga_duff.id },
+                "location": {"id": location_id },
+                "status": {"value": "active"},
+                "role": {"value": "technical"},
+            }
+            prefix_obj = await upsert_object(
+                client=client,
+                log=log,
+                branch=branch,
+                object_name=str(interconnection_subnet),
+                kind_name="InfraPrefix",
+                data=data,
+                store=store
+            )
+
             await upsert_ip_address(
                         client=client,
                         log=log,
                         branch=branch,
+                        prefix_obj=prefix_obj,
+                        device_name=f"{topology_name}-spine{spine_idx}",
                         interface_obj=intf_spine_obj,
                         description=spine_ico_ip_description,
                         account_pop_id=account_pop.id,
@@ -586,23 +641,32 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                         client=client,
                         log=log,
                         branch=branch,
+                        prefix_obj=prefix_obj,
+                        device_name=f"{topology_name}-leaf{leaf_idx}",
                         interface_obj=intf_leaf_obj,
                         description=leaf_ico_ip_description,
                         account_pop_id=account_pop.id,
                         address=leaf_ip,
                         store=store
                         )
+
+            # Delete the other interface.connected_endpoint
+            # FIXME if we want to redo the cabling - may need to cleanup the other end first
+
             # Update Spine interface (description, endpoints, status)
             intf_spine_obj.description.value = new_spine_intf_description
             intf_spine_obj.status.value = ACTIVE_STATUS
             intf_spine_obj.connected_endpoint = intf_leaf_obj
-            await intf_spine_obj.save()
+            await intf_spine_obj.save(allow_upsert=True)
+
+            # Delete the other interface.connected_endpoint
+            # FIXME if we want to redo the cabling - may need to cleanup the other end first
 
             # Update Leaf interface (description, endpoints, status)
             intf_leaf_obj.description.value = new_leaf_intf_description
             intf_leaf_obj.status.value  = ACTIVE_STATUS
             intf_leaf_obj.connected_endpoint = intf_spine_obj
-            await intf_leaf_obj.save()
+            await intf_leaf_obj.save(allow_upsert=True)
             log.info(f"- Connected {topology_name}-leaf{leaf_idx}-{uplink_port} to {topology_name}-spine{spine_idx}-{spine_port}")
 
     # Cabling Spines <-> Spines & Leaf <-> Leaf
@@ -658,10 +722,6 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
 
     #   ---------- iBGP Logic    ----------
     # Create iBGP Sessions within the Site
-    # TODO
-
-    #   ---------- Network Services    ----------
-    # Create Network Services for the topology
     # TODO
 
     return location_name
@@ -730,18 +790,36 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs
     # ------------------------------------------
     # Create Topology
     # ------------------------------------------
-    log.info("Generation Topology")
+    if "topology" in kwargs:
+        topology_name = kwargs["topology"]
+    if not topology_name:
+        log.info("Generation Topologies")
     batch = await client.create_batch()
     for topology in topologies:
-        if not topology.location.peer:
+        try:
+            location_peer = topology.location.peer
+            if not topology.name.value == topology_name:
+                continue
+            log.info(f"Generation topology {topology_name}")
+            batch.add(
+                task=generate_topology,
+                topology=topology,
+                client=client,
+                branch=branch,
+                log=log
+                )
+        except ValueError:
+            if topology_name and topology_name == topology.name.value:
+                log.info(f"{topology.name.value} is not associated with a site.")
+            elif not topology_name:
+                log.info(f"{topology.name.value} is not associated with a site.")
             continue
-        batch.add(
-            task=generate_topology,
-            topology=topology,
-            client=client,
-            branch=branch,
-            log=log
-            )
 
-    async for _, response in batch.execute():
-        log.debug(f"Topology {response} Creation Completed")
+    if batch.num_tasks < 1:
+        if topology_name:
+            log.info(f"{topology_name} doesn't exist")
+        else:
+            log.info(f"No Topologies found")
+    else:
+        async for _, response in batch.execute():
+            log.debug(f"Topology {response} Creation Completed")

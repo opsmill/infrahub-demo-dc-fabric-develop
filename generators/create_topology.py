@@ -11,8 +11,9 @@ from utils import group_add_member, populate_local_store, upsert_object
 
 TOPOLOGY = (
     # name, description, Location
-    ("fra-pod1", "Small Fabric in ATL", "fra"),
-    ("ord-pod1", "Big Fabric in ORD", "ord"),
+    ("fra-pod1", "Small Fabric in FRA", None),
+    ("ord-pod1", "Medium Fabric in ORD", "ord"),
+    ("atl-pod1", "Medium Fabric in ATL", "atl"),
 )
 
 TOPOLOGY_ELEMENTS = {
@@ -22,9 +23,13 @@ TOPOLOGY_ELEMENTS = {
         ( 2, "leaf", "CCS-720DP-48S-2F", 1500, False),
     ],
     "ord-pod1": [
+        ( 2, "spine", "CCS-720DP-48S-2F", 9192, True),
+        ( 6, "leaf", "NCS-5501-SE", 9192, True),
+    ],
+    "atl-pod1": [
         ( 4, "spine", "CCS-720DP-48S-2F", 9192, True),
-        ( 12, "leaf", "NCS-5501-SE", 9192, True),
-    ]
+        ( 8, "leaf", "NCS-5501-SE", 9192, True),
+    ],
 }
 
 
