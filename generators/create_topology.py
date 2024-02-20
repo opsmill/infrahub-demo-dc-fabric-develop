@@ -10,23 +10,23 @@ from utils import group_add_member, populate_local_store, upsert_object
 # pylint: skip-file
 
 TOPOLOGY = (
-    # name, description, Location
-    ("fra-pod1", "Small Fabric in FRA", None),
-    ("ord-pod1", "Medium Fabric in ORD", "ord"),
-    ("atl-pod1", "Medium Fabric in ATL", "atl"),
+    # name, description, Location shortname
+    ("fra02-pod1", "Small Fabric in Frankfurt 02", "fra02"),
+    ("ord01-pod1", "Medium Fabric in O'Hare 01", "ord01"),
+    ("atl01-pod1", "Medium Fabric in Atlanta 01", "atl01"),
 )
 
 TOPOLOGY_ELEMENTS = {
     # Topology [ Quantity, Device Role, Device Type, mtu, mlag support ]
-    "fra-pod1": [
+    "fra02-pod1": [
         ( 2, "spine", "CCS-720DP-48S-2F", 1500, True),
         ( 2, "leaf", "CCS-720DP-48S-2F", 1500, False),
     ],
-    "ord-pod1": [
+    "ord01-pod1": [
         ( 2, "spine", "CCS-720DP-48S-2F", 9192, True),
         ( 6, "leaf", "NCS-5501-SE", 9192, True),
     ],
-    "atl-pod1": [
+    "atl01-pod1": [
         ( 4, "spine", "CCS-720DP-48S-2F", 9192, True),
         ( 8, "leaf", "NCS-5501-SE", 9192, True),
     ],
@@ -157,11 +157,10 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs
         device_types=await client.all("InfraDeviceType")
         populate_local_store(objects=device_types, key_type="name", store=store)
         locations=await client.all("LocationGeneric")
-        populate_local_store(objects=locations, key_type="name", store=store)
+        populate_local_store(objects=locations, key_type="shortname", store=store)
 
     except Exception as e:
         log.error(f"Fail to populate due to {e}")
         exit(1)
 
-    log.info("Generation Topology")
     await create_topology(client=client, branch=branch, log=log)

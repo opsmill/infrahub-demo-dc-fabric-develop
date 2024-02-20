@@ -245,6 +245,7 @@ def prepare_interface_data(
         account_ops_id: str,
         speed: int = 1000,
         l2_mode: str = None,
+        mtu: int = None,
         untagged_vlan: InfrahubNode = None
         ) -> Dict[str, Any]:
     data = {
@@ -261,6 +262,8 @@ def prepare_interface_data(
         data["l2_mode"] = l2_mode
         if untagged_vlan:
             data["untagged_vlan"] = untagged_vlan
+    if mtu:
+        data["mtu"] = mtu
     return data
 
 async def generate_topology(client: InfrahubClient, log: logging.Logger, branch: str, topology: InfrahubNode) -> Optional[str]:
@@ -271,9 +274,9 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
         return None
 
     location_id = topology.location.peer.id
-    location_name = topology.location.peer.name.value
+    location_shortname = topology.location.peer.shortname.value
 
-    log.debug(f"{topology_name} is assigned to {location_name}.")
+    log.debug(f"{topology_name} is assigned to {topology.location.peer.name.value}")
 
     # --------------------------------------------------
     # Preparating some variables for the Location
@@ -286,19 +289,19 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
     # We are using DUFF Oragnization ASN as "internal" (AS64496)
     internal_as = store.get(key="AS64496", kind="InfraAutonomousSystem")
 
-    locations_vlans = await client.filters(kind="InfraVLAN", location__name__value=location_name, branch=branch)
+    locations_vlans = await client.filters(kind="InfraVLAN", location__shortname__value=location_shortname, branch=branch)
     populate_local_store(objects=locations_vlans, key_type="name", store=store)
-    vlan_server = store.get(key=f"{location_name}_server", kind="InfraVLAN")
+    vlan_server = store.get(key=f"{location_shortname}_server", kind="InfraVLAN")
 
     # Using Prefix role to knwow which network to use. Role to Prefix should help avoid doing this
-    locations_subnets = await client.filters(kind="InfraPrefix", location__name__value=location_name, branch=branch)
+    locations_subnets = await client.filters(kind="InfraPrefix", location__shortname__value=location_shortname, branch=branch)
     location_external_net = []
     location_technical_net_pool = []
     location_loopback_net_pool = []
     location_mgmt_net_pool = []
 
     if not locations_subnets:
-        # Will not be able to set the loopback, so we are skipping the device creation completely
+        log.error(f"{topology.location.peer.name.value} doesn't have any prefixes")
         return None
 
     for prefix in locations_subnets:
@@ -333,6 +336,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
         platform_id = platform.id
         device_role_name = topology_element.device_role.value
         device_type_name = device_type.name.value
+        device_mtu = topology_element.mtu.value
 
         for id in range(1, int(topology_element.quantity.value)+1):
             device_name = f"{topology_name}-{device_role_name}{id}"
@@ -389,7 +393,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 intf_status=ACTIVE_STATUS,
                 description=loopback_description,
                 account_pop_id=account_pop.id,
-                account_ops_id=account_ops.id
+                account_ops_id=account_ops.id,
+                mtu=device_mtu,
                 )
             loopback_obj = await upsert_interface(
                 client=client,
@@ -424,7 +429,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 intf_status=ACTIVE_STATUS,
                 description=mgmt_description,
                 account_pop_id=account_pop.id,
-                account_ops_id=account_eng.id
+                account_ops_id=account_eng.id,
+                mtu=device_mtu,
                 )
             mgmt_obj = await upsert_interface(
                 client=client,
@@ -471,7 +477,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                         intf_status=PROVISIONING_STATUS,
                         description=interface_description,
                         account_pop_id=account_pop.id,
-                        account_ops_id=account_ops.id
+                        account_ops_id=account_ops.id,
+                        mtu=device_mtu,
                         )
                 # L2 Interfaces
                 elif intf_role in L2_ROLE_MAPPING:
@@ -484,7 +491,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                         account_pop_id=account_pop.id,
                         account_ops_id=account_ops.id,
                         l2_mode="Access",
-                        untagged_vlan=vlan_server
+                        untagged_vlan=vlan_server,
+                        mtu=device_mtu,
                     )
                 interface_obj = await upsert_interface(
                     client=client,
@@ -607,7 +615,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
             interconnection_ips = list(interconnection_subnet.hosts())
             spine_ip = f"{str(interconnection_ips[0])}/31"
             leaf_ip = f"{str(interconnection_ips[1])}/31"
-            prefix_description = f"{location_name.upper()}-ico-{IPv4Network(interconnection_subnet).network_address}"
+            prefix_description = f"{location_shortname.lower()}-ico-{IPv4Network(interconnection_subnet).network_address}"
             data = {
                 "prefix":  {"value": IPv4Network(interconnection_subnet) },
                 "description": {"value": prefix_description},
@@ -725,7 +733,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
     # Create iBGP Sessions within the Site
     # TODO
 
-    return location_name
+    return location_shortname
 
 # ---------------------------------------------------------------
 # Use the `infrahubctl run` command line to execute this script

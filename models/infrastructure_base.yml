@@ -9,7 +9,7 @@ generics:
     icon: "mingcute:location-line"
     include_in_menu: true
     hierarchical: True
-    default_filter: name__value
+    default_filter: shortname__value
     order_by:
       - name__value
     display_labels:
@@ -18,9 +18,19 @@ generics:
       - name: name
         kind: Text
         unique: true
+        order_weight: 1000
+      - name: shortname
+        kind: Text
+        unique: true
+        order_weight: 1100
       - name: description
         kind: Text
         optional: true
+        order_weight: 1200
+      - name: timezone
+        kind: Text
+        optional: true
+        order_weight: 1300
     relationships:
       - name: prefixes
         label: Prefixes
@@ -37,7 +47,7 @@ generics:
         peer: InfraDevice
         cardinality: many
         optional: true
-      - name: network_management
+      - name: network_management_servers
         label: "Network Management Servers"
         peer: NetworkMangementServer
         optional: true
@@ -55,18 +65,23 @@ generics:
     attributes:
       - name: name
         kind: Text
+        order_weight: 1000
       - name: description
         kind: Text
         optional: true
+        order_weight: 1100
       - name: speed
         kind: Number
+        order_weight: 1400
       - name: mtu
         label: MTU
         default_value: 1500
         kind: Number
+        order_weight: 1500
       - name: enabled
         kind: Boolean
         default_value: true
+        order_weight: 1200
       - name: status
         kind: Dropdown
         optional: true
@@ -87,6 +102,7 @@ generics:
             label: Drained
             description: "Temporarily taken out of service."
             color: "#bfbfbf"
+        order_weight: 1300
       - name: role
         kind: Dropdown
         optional: true
@@ -131,6 +147,7 @@ generics:
             label: Spare
             description: "Reserve resources for future use."
             color: "#d3d3d3"
+        order_weight: 1700
     relationships:
       - name: device
         peer: InfraDevice
@@ -163,7 +180,6 @@ generics:
     display_labels: [name__value]
     order_by: [name__value]
     include_in_menu: true
-    menu_placement: "TopologyTopology"
     attributes:
       - name: name
         kind: Text
@@ -192,11 +208,10 @@ generics:
             description: "Temporarily taken out of service."
             color: "#bfbfbf"
     relationships:
-      - name: topology
-        peer: TopologyTopology
+      - name: location
+        peer: LocationGeneric
         optional: true
-        cardinality: one
-        kind: Parent
+        cardinality: many
       - name: ip_addresses
         peer: InfraIPAddress
         optional: true
@@ -957,7 +972,6 @@ nodes:
       - name: content
         kind: Text
         order_weight: 2100
-
   - name: DHCPServer
     namespace: Network
     description: "Represents a DHCP server in the network."
@@ -980,7 +994,6 @@ nodes:
         optional: true
         cardinality: many
         kind: Component
-
   - name: NameServer
     namespace: Network
     description: "Represents a DNS server in the network."
@@ -992,7 +1005,6 @@ nodes:
     order_by: [name__value]
     inherit_from:
       - NetworkMangementServer
-
   - name: NTPServer
     namespace: Network
     description: "Represents a NTP server in the network."
@@ -1004,7 +1016,3 @@ nodes:
     order_by: [name__value]
     inherit_from:
       - NetworkMangementServer
-    attributes:
-      - name: stratum_level
-        kind: Number
-        order_weight: 2000

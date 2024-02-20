@@ -10,7 +10,7 @@ generics:
     default_filter: name__value
     display_labels: [name__value]
     order_by: [name__value]
-    include_in_menu: true
+    include_in_menu: false
     menu_placement: "TopologyTopology"
     attributes:
       - name: name
@@ -121,7 +121,6 @@ nodes:
             label: RSVP
           - name: segment_routing
             label: "Segment Routing"
-
   - name: EVPNStrategy
     namespace: Topology
     description: "Specific strategy attributes for EVPN."
@@ -157,7 +156,7 @@ nodes:
     description: "Physical aspect of topology elements."
     label: "Physical Topology Element"
     icon: "carbon:network-3-reference"
-    menu_placement: "TopologyGenericElement"
+    menu_placement: "TopologyTopology"
     default_filter: name__value
     order_by: [name__value]
     inherit_from:

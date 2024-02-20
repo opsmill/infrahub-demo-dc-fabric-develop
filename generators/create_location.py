@@ -1,32 +1,41 @@
 import logging
 import uuid
+import random
 from collections import defaultdict
 from ipaddress import IPv4Network
 from typing import Dict, List
 
 from infrahub_sdk import UUIDT, InfrahubClient, InfrahubNode, NodeStore
 
-from utils import group_add_member, populate_local_store, upsert_object
+from utils import add_relationships, group_add_member, populate_local_store, upsert_object
 
 # flake8: noqa
 # pylint: skip-file
 
 LOCATIONS = {
-    # Name, Type, Parent
-    ("north-america", "region", None),
-    ("united states", "country",  "north-america"),
-    ("atl", "site", "united states"),
-    ("atl-rack1", "rack", "atl"),
-    ("ord", "site", "united states"),
-    ("europe", "region", None),
-    ("netherlands", "country", "europe"),
-    ("germany", "country", "europe"),
-    ("ams", "site", "europe"),
-    ("fra", "site", "europe"),
+    # Name, Short-name, Type, Parent, Timezone
+    ("North America", "nam", "region", None, None),
+    ("United States", "us", "country",  "North America", None),
+    ("Atlanta 01", "atl01", "site", "United States", "GMT-5" ),
+    ("O'Hare 01", "ord01", "site", "United States", "GMT-6"),
+    ("Europe", "eu", "region", None, None),
+    ("Netherlands", "nl", "country", "Europe", "GMT+1"),
+    ("Germany", "de", "country", "Europe", "GMT+1"),
+    ("Amsterdam 09", "ams09", "site", "Netherlands", None),
+    ("Frankfurt 02", "fra02", "site", "Germany", None),
+}
+
+MGMT_SERVERS = {
+    # Name, Description, Type
+    ("8.8.8.8", "Google-8.8.8.8", "Name"),
+    ("8.8.4.4", "Google-8.8.4.4", "Name"),
+    ("1.1.1.1", "Cloudflare-1.1.1.1", "Name"),
+    ("time1.google.com", "Google time1", "NTP"),
+    ("time.cloudflare.com", "Cloudflare time", "NTP"),
 }
 
 # We filter locations to include only those of type 'site'
-site_locations = {name: (type, parent) for name, type, parent in LOCATIONS if type == "site"}
+site_locations = {name: (shortname, type, parent, timezone) for name, shortname, type, parent, timezone in LOCATIONS if type == "site"}
 
 # We assigned a /16 per Location for "data" (257 Locations possibles)
 INTERNAL_POOL = IPv4Network("10.0.0.0/8").subnets(new_prefix=16)
@@ -68,21 +77,64 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
 
     orga_duff = store.get(key="Duff", kind="CoreOrganization")
 
+    for mgmt_server in MGMT_SERVERS:
+        mgmt_server_name = mgmt_server[0]
+        mgmt_server_desc = mgmt_server[1]
+        mgmt_server_type = mgmt_server[2]
+        mgmt_server_kind = f"Network{mgmt_server_type}Server"
+        # --------------------------------------------------
+        # Create Mgmt Servers
+        # --------------------------------------------------
+        data={
+            "name": {"value": mgmt_server_name, "is_protected": True, "source": account_eng.id},
+            "description": {"value": mgmt_server_desc, "is_protected": True, "source": account_eng.id},
+            "status": {"value": ACTIVE_STATUS, "is_protected": True, "source": account_eng.id},
+        }
+        await upsert_object(
+            client=client,
+            log=log,
+            branch=branch,
+            object_name=mgmt_server_name,
+            kind_name=mgmt_server_kind,
+            data=data,
+            store=store,
+            retrived_on_failure=True
+            )
+
+    parent_to_children = {}
     for location in LOCATIONS:
         location_name = location[0]
-        location_type = location[1]
+        location_short = location[1]
+        location_type = location[2]
+        location_parent_name = location[3]
+        location_timezone = location[4]
 
-        location_description = f"{location_type.title()} {location_name.upper()}"
+        location_description = f"{location_type.title()} {location_name.title()} ({location_short.upper()})"
         location_kind = f"Location{location_type.title()}"
 
         # --------------------------------------------------
         # Create Location
         # --------------------------------------------------
+        mgmt_servers_obj = []
         data={
             "name": {"value": location_name, "is_protected": True, "source": account_crm.id},
-            "description": {"value": location_description},
+            "description": {"value": location_description, "is_protected": True, "source": account_crm.id},
+            "shortname": {"value": location_short, "is_protected": True, "source": account_crm.id},
+            "timezone": {"value": location_timezone, "is_protected": True, "source": account_crm.id},
         }
-        await upsert_object(
+        if not location_timezone:
+            name_servers = [server[0] for server in MGMT_SERVERS if server[2] == "Name"]
+            random_name_server = random.choice(name_servers)
+
+            ntp_servers = [server[0] for server in MGMT_SERVERS if server[2] == "NTP"]
+            random_ntp_server = random.choice(ntp_servers)
+
+            time_server_obj = store.get(key=random_ntp_server, kind="NetworkNTPServer")
+            name_server_obj = store.get(key=random_name_server, kind="NetworkNameServer")
+
+            mgmt_servers_obj = [name_server_obj, time_server_obj]
+
+        location_obj = await upsert_object(
             client=client,
             log=log,
             branch=branch,
@@ -93,27 +145,46 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
             retrived_on_failure=True
             )
 
+        await add_relationships(
+            client=client,
+            node_to_update=location_obj,
+            relation_to_update="network_management_servers",
+            related_nodes=mgmt_servers_obj,
+            branch=branch,
+            )
+        for mgmt_server_obj in mgmt_servers_obj:
+            log.info(f"- Add {mgmt_server_obj.name.value.title()} to {location_name.title()}")
+        if location_parent_name:
+            if location_parent_name not in parent_to_children:
+                parent_to_children[location_parent_name] = []
+
+            parent_to_children[location_parent_name].append(location_name)
+
+    for parent, children in parent_to_children.items():
+        parent_object = store.get(key=parent, kind=f"Location{[loc[2].title() for loc in LOCATIONS if loc[0] == parent][0]}")
+        if parent_object:
+            childs = []
+            for child_name in children:
+                child_kind = f"Location{[loc[2].title() for loc in LOCATIONS if loc[0] == child_name][0]}"
+                child_object = store.get(key=child_name, kind=child_kind)
+                if child_object:
+                    childs.append(child_object)
+            await add_relationships(
+                client=client,
+                node_to_update=parent_object,
+                relation_to_update="children",
+                related_nodes=childs,
+                branch=branch,
+            )
+            log.info(f"- Add {', '.join(children).title()} to {parent.title()}")
+
     for location in LOCATIONS:
         location_name = location[0]
-        location_type = location[1]
-        location_parent_name = location[2]
-
-        location_description = f"{location_type.title()} {location_name.upper()}"
-        location_kind = f"Location{location_type.title()}"
-
-        # Set the parent
-        if location_parent_name:
-            # Find the parent in the LOCATIONS set and get its type
-            for loc in LOCATIONS:
-                if loc[0] == location_parent_name:
-                    parent_kind = f"Location{loc[1].title()}"
-                    break
-            location_object = store.get(key=location_name, kind=location_kind)
-            parent_object = store.get(key=location_parent_name, kind=parent_kind)
-            # if parent_object:
-            #     location_object.parent = parent_object
-            #     await location_object.save()
-            log.info(f"- Add {location_name} to {location_parent_name}")
+        location_short = location[1]
+        location_type = location[2]
+        location_parent_name = location[3]
+        location_timezone = location[4]
+        location_obj = store.get(key=location_name, kind=location_kind)
 
         # if it's not a site, we don't create anything else
         if location_type != "site":
@@ -138,13 +209,13 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
         # Create VLANs
         # --------------------------------------------------
         batch = await client.create_batch()
-        location_id = location_object.id
+        location_id = location_obj.id
         for vlan in VLANS:
             role = vlan[1]
-            vlan_name = f"{location_name}_{vlan[1]}"
+            vlan_name = f"{location_short.lower()}_{vlan[1]}"
 
             data={
-                "name": {"value": f"{location_name}_{vlan[1]}", "is_protected": True, "source": account_pop.id},
+                "name": {"value": vlan_name, "is_protected": True, "source": account_pop.id},
                 "vlan_id": {"value": int(vlan[0]), "is_protected": True, "owner": account_eng.id, "source": account_pop.id},
                 "description": {"value": f"{location_name.upper()} {vlan[1].title()} VLAN" },
                 "status": {"value": ACTIVE_STATUS, "owner": account_ops.id},
@@ -164,14 +235,14 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
         async for node, _ in batch.execute():
             log.info(f"- Created {node._schema.kind} - {node.name.value}")
 
-        mgmt_vlan= store.get(key=f"{location_name}_management", kind="InfraVLAN")
+        mgmt_vlan = store.get(key=f"{location_short.lower()}_management", kind="InfraVLAN")
 
         # --------------------------------------------------
         # Create Prefix
         # --------------------------------------------------
         batch = await client.create_batch()
         # Create Supernet
-        supernet_description = f"{location_name.upper()}-supernet-{IPv4Network(location_supernet).network_address}"
+        supernet_description = f"{location_short.lower()}-supernet-{IPv4Network(location_supernet).network_address}"
         data = {
             "prefix":  {"value": location_supernet },
             "description": {"value": supernet_description},
@@ -195,16 +266,16 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
             vlan_id = None
             if any(prefix.subnet_of(external_net) for external_net in EXTERNAL_NETWORKS):
                 prefix_status = "active"
-                prefix_description = f"{location_name.upper()}-ext-{IPv4Network(prefix).network_address}"
+                prefix_description = f"{location_short.lower()}-ext-{IPv4Network(prefix).network_address}"
                 prefix_role = "public"
             elif prefix.subnet_of(location_mgmt_pool):
                 prefix_status = "active"
-                prefix_description = f"{location_name.upper()}-mgmt-{IPv4Network(prefix).network_address}"
+                prefix_description = f"{location_short.lower()}-mgmt-{IPv4Network(prefix).network_address}"
                 prefix_role = "management"
                 vlan_id = mgmt_vlan.id
             else:
                 prefix_status = "reserved"
-                prefix_description = f"{location_name.upper()}-int-{IPv4Network(prefix).network_address}"
+                prefix_description = f"{location_short.lower()}-int-{IPv4Network(prefix).network_address}"
                 if prefix.subnet_of(location_loopback_pool):
                     prefix_role = "loopback"
                 else:
