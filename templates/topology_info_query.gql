@@ -26,8 +26,12 @@ query topology_info {
             }
           }
         }
-        type {
-          value
+        device_type {
+	  node {
+	    name {
+	      value
+	    }
+	  }
         }
       }
     }
