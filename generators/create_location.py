@@ -15,9 +15,9 @@ LOCATIONS = {
     # Name, Type, Parent
     ("north-america", "region", None),
     ("united states", "country",  "north-america"),
-    ("atl", "site", "usa"),
+    ("atl", "site", "united states"),
     ("atl-rack1", "rack", "atl"),
-    ("ord", "site", "usa"),
+    ("ord", "site", "united states"),
     ("europe", "region", None),
     ("netherlands", "country", "europe"),
     ("germany", "country", "europe"),
