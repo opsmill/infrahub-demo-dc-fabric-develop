@@ -2,15 +2,9 @@ query check_device_topology {
   InfraDevice {
     edges {
       node {
+        id
         name {
           value
-        }
-        location {
-          node {
-            name {
-              value
-            }
-          }
         }
         role {
           value
@@ -19,6 +13,31 @@ query check_device_topology {
           node {
             name {
               value
+            }
+          }
+        }
+        location {
+          node {
+            name {
+              value
+            }
+          }
+        }
+      }
+    }
+  }
+  CoreStandardGroup {
+    edges {
+      node {
+        name {
+          value
+        }
+        members {
+          edges {
+            node {
+              ... on InfraDevice {
+                id
+              }
             }
           }
         }
