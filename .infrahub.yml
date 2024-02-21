@@ -2,6 +2,8 @@
 check_definitions:
   - name: "check_device_topology"
     class_name: "InfrahubCheckDeviceTopology"
+    parameters:
+      topology_name: "name__value"
     file_path: "checks/check_device_topology.py"
 
 jinja2_transforms:
