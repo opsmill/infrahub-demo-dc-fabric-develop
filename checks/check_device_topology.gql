@@ -1,0 +1,59 @@
+query check_device_topology {
+  InfraDevice {
+    edges {
+      node {
+        name {
+          value
+        }
+        site {
+          node {
+            name {
+              value
+            }
+          }
+        }
+        role {
+          value
+        }
+      }
+    }
+  }
+  TopologyTopology {
+    edges {
+      node {
+        elements {
+	  edges {
+	    node {
+	      id
+	      name {
+	        value
+	      }
+              quantity {
+                value
+              }
+              ... on TopologyPhysicalElement {
+                device_role {
+                  value
+                }
+                device_type {
+                  node {
+                    name {
+                      value
+                    }
+                  }
+                }
+              }
+	    }
+	  }
+	}
+        location {
+	  node {
+	    name {
+	      value
+	    }
+	  }
+	}
+      }
+    }
+  }
+}
