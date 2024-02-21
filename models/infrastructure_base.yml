@@ -558,6 +558,7 @@ nodes:
     label: "Circuit"
     icon: "mdi:cable-data"
     default_filter: circuit_id__value
+    include_in_menu: false
     order_by:
       - circuit_id__value
     display_labels:
@@ -624,6 +625,7 @@ nodes:
     label: "Circuit Endpoint"
     icon: "mdi:ethernet-cable"
     menu_placement: "InfraCircuit"
+    include_in_menu: false
     attributes:
       - name: description
         kind: Text
@@ -648,7 +650,7 @@ nodes:
     description: "An Autonomous System (AS) is a set of Internet routable IP prefixes belonging to a network"
     label: "Autonomous System"
     icon: "mdi:bank-circle-outline"
-    menu_placement: InfraBGPSession
+    # menu_placement: InfraBGPSession
     default_filter: name__value
     order_by: ["asn__value"]
     display_labels:
@@ -676,6 +678,7 @@ nodes:
     label: "BGP Peer Group"
     icon: "mdi:view-grid-plus-outline"
     menu_placement: InfraBGPSession
+    include_in_menu: false
     default_filter: name__value
     order_by:
       - name__value
@@ -716,6 +719,7 @@ nodes:
     order_by:
       - device__name__value
       - remote_as__asn__value
+    include_in_menu: false
     attributes:
       - name: type
         kind: Text
