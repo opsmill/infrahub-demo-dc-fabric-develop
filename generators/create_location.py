@@ -13,18 +13,6 @@ from utils import add_relationships, group_add_member, populate_local_store, ups
 # pylint: skip-file
 
 LOCATIONS = {
-    # Name, Short-name, Type, Parent, Timezone
-    ("North America", "nam", "region", None, None),
-    ("United States", "us", "country",  "North America", None),
-    ("Atlanta 01", "atl01", "site", "United States", "GMT-5" ),
-    ("O'Hare 01", "ord01", "site", "United States", "GMT-6"),
-    ("Europe", "eu", "region", None, None),
-    ("Netherlands", "nl", "country", "Europe", "GMT+1"),
-    ("Germany", "de", "country", "Europe", "GMT+1"),
-    ("Amsterdam 09", "ams09", "site", "Netherlands", None),
-    ("Frankfurt 02", "fra02", "site", "Germany", None),
-}
-LOCATIONS2 = {
     "Europe": {
         "shortname": "EU",
         "timezone": "GMT+1",
@@ -196,7 +184,7 @@ MGMT_SERVERS = {
 
 # We filter locations to include only those of type 'site'
 site_locations = []
-for continent_name, continent_data in LOCATIONS2.items():
+for continent_name, continent_data in LOCATIONS.items():
     for country_name, country_data in continent_data["countries"].items():
         for region_name, region_data in country_data.get("regions", {}).items():
             for metro_name, metro_data in region_data.get("metros", {}).items():
@@ -233,7 +221,7 @@ ACTIVE_STATUS = "active"
 store = NodeStore()
 
 async def create_location_hierarchy(client: InfrahubClient, log: logging.Logger, branch: str):
-    for continent_name, continent_data in LOCATIONS2.items():
+    for continent_name, continent_data in LOCATIONS.items():
         continent_shortname = continent_data["shortname"]
         continent_timezone = continent_data.get("timezone", None)
         data={
@@ -400,6 +388,7 @@ async def create_location_hierarchy(client: InfrahubClient, log: logging.Logger,
                                         store=store,
                                         retrived_on_failure=True
                                     )
+
 async def create_location(client: InfrahubClient, log: logging.Logger, branch: str):
     # --------------------------------------------------
     # Preparating some variables for the Location
