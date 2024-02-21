@@ -35,9 +35,7 @@ query check_device_topology {
         members {
           edges {
             node {
-              ... on InfraDevice {
-                id
-              }
+              id
             }
           }
         }
@@ -47,6 +45,9 @@ query check_device_topology {
   TopologyTopology {
     edges {
       node {
+        name {
+          id
+        }
         elements {
           edges {
             node {

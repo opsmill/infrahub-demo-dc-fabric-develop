@@ -67,7 +67,7 @@ class InfrahubCheckDeviceTopology(InfrahubCheck):
 
         for topology_edge in topologies:
             topology_node = topology_edge["node"]
-            topology_name = topology_node["location"]["node"]["name"]["value"] + "_topology"
+            topology_name = topology_node["name"]["value"] + "_topology"
             topology_elements = topology_node["elements"]["edges"]
 
             if topology_name in group_devices:
@@ -89,6 +89,12 @@ class InfrahubCheckDeviceTopology(InfrahubCheck):
                     if quantity % 2 != 0:
                         self.log_error(
                             message=f"{topology_name} has an odd number of devices for role {role}",
+                            object_id=f"{role}",
+                            object_type="role_count"
+                        )
+                    else:
+                        self.log_error(
+                            message=f"{topology_name} has an even number of devices for role {role}",
                             object_id=f"{role}",
                             object_type="role_count"
                         )
@@ -115,3 +121,9 @@ class InfrahubCheckDeviceTopology(InfrahubCheck):
                                 object_id=f"{role}_{device_type}",
                                 object_type="role_device_type"
                             )
+            else:
+                self.log_error(
+                    message=f"No group found for {topology_name}",
+                    object_id=f"{topology_name}",
+                    object_type="topology_name"
+                )
