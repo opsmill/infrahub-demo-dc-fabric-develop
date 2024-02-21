@@ -24,6 +24,166 @@ LOCATIONS = {
     ("Amsterdam 09", "ams09", "site", "Netherlands", None),
     ("Frankfurt 02", "fra02", "site", "Germany", None),
 }
+LOCATIONS2 = {
+    "Europe": {
+        "shortname": "EU",
+        "timezone": "GMT+1",
+        "countries": {
+            "Germany": {
+                "shortname": "DE",
+                "timezone": "CET",
+                "regions": {
+                    "de-central": {
+                        "shortname": "DECN",
+                        "metros": {
+                            "Frankfurt": {
+                                "shortname": "FRA",
+                                "buildings": {
+                                    "Equinix FRA05": {
+                                        "shortname": "FRA05",
+                                        "floors": {
+                                            "floor-32": {
+                                                "shortname": "F32",
+                                                "suites": {
+                                                    "suite-325": {
+                                                        "shortname": "S325",
+                                                        "racks": ["rack-3255"]
+                                                    }
+                                                }
+                                            },
+                                            "floor-33": {
+                                                "shortname": "F33",
+                                                "suites": {
+                                                    "suite-338": {
+                                                        "shortname": "S338",
+                                                        "racks": ["rack-3389"]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "Netherlands": {
+                "shortname": "NL",
+                "timezone": "CET",
+                "regions": {
+                    "nl-west": {
+                        "shortname": "NLW",
+                        "metros": {
+                            "Amsterdam": {
+                                "shortname": "AMS",
+                                "buildings": {
+                                    "Interxion AMS9": {
+                                        "shortname": "AMS9",
+                                        "floors": {
+                                            "floor-0": {
+                                                "shortname": "F0",
+                                                "suites": {
+                                                    "suite-ld8-596": {
+                                                        "shortname": "LD8",
+                                                        "racks": ["ld8-596-R01B01", "ld8-596-R01B02"]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "North America": {
+        "shortname": "NA",
+        "countries": {
+            "United States of America": {
+                "shortname": "USA",
+                "regions": {
+                    "us-east": {
+                        "shortname": "USE",
+                        "timezone": "EST",
+                        "metros": {
+                            "Atlanta": {"shortname": "ATL"},
+                            "south": {"shortname": "SO"}
+                        }
+                    },
+                    "us-central": {
+                        "shortname": "USC",
+                        "timezone": "CST",
+                        "metros": {
+                            "Denver": {
+                                "shortname": "DEN",
+                                "buildings": {
+                                    "Equinix DE1": {
+                                        "shortname": "DE1",
+                                        "floors": {
+                                            "floor-11": {
+                                                "shortname": "F11",
+                                                "suites": {
+                                                    "suite-111": {
+                                                        "shortname": "S111",
+                                                        "racks": ["rack-1111"]
+                                                    },
+                                                    "suite-112": {
+                                                        "shortname": "S112",
+                                                        "racks": ["rack-1121"]
+                                                    }
+                                                }
+                                            },
+                                            "floor-12": {
+                                                "shortname": "F12",
+                                                "suites": {
+                                                    "suite-121": {
+                                                        "shortname": "S121",
+                                                        "racks": ["rack-1211"]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "Equinix DE2": {
+                                        "shortname": "DE2",
+                                        "floors": {
+                                            "floor-21": {
+                                                "shortname": "F21",
+                                                "suites": {
+                                                    "suite-211": {
+                                                        "shortname": "S211",
+                                                        "racks": ["rack-2111"]
+                                                    },
+                                                    "suite-212": {
+                                                        "shortname": "S212",
+                                                        "racks": ["rack-2121"]
+                                                    }
+                                                }
+                                            },
+                                            "floor-22": {
+                                                "shortname": "F22",
+                                                "suites": {
+                                                    "suite-221": {
+                                                        "shortname": "S221",
+                                                        "racks": ["rack-2211"]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 MGMT_SERVERS = {
     # Name, Description, Type
@@ -35,15 +195,21 @@ MGMT_SERVERS = {
 }
 
 # We filter locations to include only those of type 'site'
-site_locations = {name: (shortname, type, parent, timezone) for name, shortname, type, parent, timezone in LOCATIONS if type == "site"}
+site_locations = []
+for continent_name, continent_data in LOCATIONS2.items():
+    for country_name, country_data in continent_data["countries"].items():
+        for region_name, region_data in country_data.get("regions", {}).items():
+            for metro_name, metro_data in region_data.get("metros", {}).items():
+                for building_name, building_data in metro_data.get("buildings", {}).items():
+                    site_locations.append({"name": building_name, "shortname": building_data["shortname"]})
 
 # We assigned a /16 per Location for "data" (257 Locations possibles)
 INTERNAL_POOL = IPv4Network("10.0.0.0/8").subnets(new_prefix=16)
-LOCATION_SUPERNETS = {location: next(INTERNAL_POOL) for location in site_locations}
+LOCATION_SUPERNETS = {location["shortname"]: next(INTERNAL_POOL) for location in site_locations}
 
 # We assigned a /24 per Location for "management" (257 Locations possibles)
 MANAGEMENT_POOL = IPv4Network("172.16.0.0/16").subnets(new_prefix=24)
-LOCATION_MGMTS = {location: next(MANAGEMENT_POOL) for location in site_locations}
+LOCATION_MGMTS = {location["shortname"]: next(MANAGEMENT_POOL) for location in site_locations}
 
 # Using RFC5735 TEST-NETs as external networks
 EXTERNAL_NETWORKS = [
@@ -54,7 +220,7 @@ EXTERNAL_NETWORKS = [
 # We assigned one /28 per Location (48 Location possibles)
 NETWORKS_POOL_EXTERNAL = [subnet for network in EXTERNAL_NETWORKS for subnet in network.subnets(new_prefix=28)]
 NETWORKS_POOL_ITER = iter(NETWORKS_POOL_EXTERNAL)
-LOCATION_EXTERNAL_NETS = {location: next(NETWORKS_POOL_ITER) for location in site_locations}
+LOCATION_EXTERNAL_NETS = {location["shortname"]: next(NETWORKS_POOL_ITER) for location in site_locations}
 
 VLANS = (
     ("200", "server"),
@@ -66,6 +232,174 @@ ACTIVE_STATUS = "active"
 
 store = NodeStore()
 
+async def create_location_hierarchy(client: InfrahubClient, log: logging.Logger, branch: str):
+    for continent_name, continent_data in LOCATIONS2.items():
+        continent_shortname = continent_data["shortname"]
+        continent_timezone = continent_data.get("timezone", None)
+        data={
+                "name": continent_name,
+                "shortname": continent_shortname,
+                "timezone": continent_timezone,
+            }
+        continent_obj = await upsert_object(
+            client=client,
+            log=log,
+            branch=branch,
+            object_name=continent_name,
+            kind_name="LocationContinent",
+            data=data,
+            store=store,
+            retrived_on_failure=True
+            )
+
+        for country_name, country_data in continent_data["countries"].items():
+            country_shortname = country_data["shortname"]
+            country_timezone = country_data.get("timezone", None)
+            data={
+                    "name": country_name,
+                    "shortname": country_shortname,
+                    "parent": continent_obj,
+                    "timezone": country_timezone,
+                }
+            country_obj = await upsert_object(
+                client=client,
+                log=log,
+                branch=branch,
+                object_name=country_name,
+                kind_name="LocationCountry",
+                data=data,
+                store=store,
+                retrived_on_failure=True
+                )
+
+            for region_name, region_data in country_data.get("regions", {}).items():
+                region_shortname = region_data["shortname"]
+                region_timezone = region_data.get("timezone", None)
+                data={
+                        "name": region_name,
+                        "shortname": region_shortname,
+                        "parent": country_obj,
+                        "timezone": region_timezone,
+                    }
+                region_obj = await upsert_object(
+                    client=client,
+                    log=log,
+                    branch=branch,
+                    object_name=region_name,
+                    kind_name="LocationRegion",
+                    data=data,
+                    store=store,
+                    retrived_on_failure=True
+                )
+                name_servers = [server[0] for server in MGMT_SERVERS if server[2] == "Name"]
+                random_name_server = random.choice(name_servers)
+
+                ntp_servers = [server[0] for server in MGMT_SERVERS if server[2] == "NTP"]
+                random_ntp_server = random.choice(ntp_servers)
+
+                time_server_obj = store.get(key=random_ntp_server, kind="NetworkNTPServer")
+                name_server_obj = store.get(key=random_name_server, kind="NetworkNameServer")
+
+                mgmt_servers_obj = [name_server_obj, time_server_obj]
+
+                await add_relationships(
+                    client=client,
+                    node_to_update=region_obj,
+                    relation_to_update="network_management_servers",
+                    related_nodes=mgmt_servers_obj,
+                    branch=branch,
+                )
+                for mgmt_server_obj in mgmt_servers_obj:
+                    log.info(f"- Added {mgmt_server_obj.name.value} to {region_name}")
+
+                for metro_name, metro_data in region_data.get("metros", {}).items():
+                    metro_shortname = metro_data["shortname"]
+                    data={
+                            "name": metro_name,
+                            "shortname": metro_shortname,
+                            "parent": region_obj,
+                        }
+                    metro_obj = await upsert_object(
+                        client=client,
+                        log=log,
+                        branch=branch,
+                        object_name=metro_name,
+                        kind_name="LocationMetro",
+                        data=data,
+                        store=store,
+                        retrived_on_failure=True
+                    )
+
+                    for building_name, building_data in metro_data.get("buildings", {}).items():
+                        building_shortname = building_data["shortname"]
+                        data={
+                            "name": building_name,
+                            "shortname": building_shortname,
+                            "parent": metro_obj,
+                        }
+                        building_obj = await upsert_object(
+                            client=client,
+                            log=log,
+                            branch=branch,
+                            object_name=building_name,
+                            kind_name="LocationBuilding",
+                            data=data,
+                            store=store,
+                            retrived_on_failure=True
+                        )
+
+                        for floor_name, floor_data in building_data.get("floors", {}).items():
+                            floor_shortname = floor_data["shortname"]
+                            data={
+                                "name": floor_name,
+                                "shortname": floor_shortname,
+                                "parent": building_obj,
+                            }
+                            floor_obj = await upsert_object(
+                                client=client,
+                                log=log,
+                                branch=branch,
+                                object_name=floor_name,
+                                kind_name="LocationFloor",
+                                data=data,
+                                store=store,
+                                retrived_on_failure=True
+                            )
+
+                            for suite_name, suite_data in floor_data.get("suites", {}).items():
+                                suite_shortname = suite_data["shortname"]
+                                data={
+                                    "name": suite_name,
+                                    "shortname": suite_shortname,
+                                    "parent": floor_obj,
+                                }
+                                suite_obj = await upsert_object(
+                                    client=client,
+                                    log=log,
+                                    branch=branch,
+                                    object_name=suite_name,
+                                    kind_name="LocationSuite",
+                                    data=data,
+                                    store=store,
+                                    retrived_on_failure=True
+                                )
+
+                                for rack in suite_data.get("racks", []):
+                                    data={
+                                        "name": rack,
+                                        "shortname": rack.upper(),
+                                        "parent": suite_obj,
+                                    }
+                                    rack_obj = await upsert_object(
+                                        client=client,
+                                        log=log,
+                                        branch=branch,
+                                        object_name=rack,
+                                        kind_name="LocationRack",
+                                        data=data,
+                                        store=store,
+                                        retrived_on_failure=True
+                                    )
 async def create_location(client: InfrahubClient, log: logging.Logger, branch: str):
     # --------------------------------------------------
     # Preparating some variables for the Location
@@ -101,104 +435,21 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
             retrived_on_failure=True
             )
 
-    parent_to_children = {}
-    for location in LOCATIONS:
-        location_name = location[0]
-        location_short = location[1]
-        location_type = location[2]
-        location_parent_name = location[3]
-        location_timezone = location[4]
+    await create_location_hierarchy(client=client, branch=branch, log=log)
 
-        location_description = f"{location_type.title()} {location_name.title()} ({location_short.upper()})"
-        location_kind = f"Location{location_type.title()}"
-
-        # --------------------------------------------------
-        # Create Location
-        # --------------------------------------------------
-        mgmt_servers_obj = []
-        data={
-            "name": {"value": location_name, "is_protected": True, "source": account_crm.id},
-            "description": {"value": location_description, "is_protected": True, "source": account_crm.id},
-            "shortname": {"value": location_short, "is_protected": True, "source": account_crm.id},
-            "timezone": {"value": location_timezone, "is_protected": True, "source": account_crm.id},
-        }
-        if not location_timezone:
-            name_servers = [server[0] for server in MGMT_SERVERS if server[2] == "Name"]
-            random_name_server = random.choice(name_servers)
-
-            ntp_servers = [server[0] for server in MGMT_SERVERS if server[2] == "NTP"]
-            random_ntp_server = random.choice(ntp_servers)
-
-            time_server_obj = store.get(key=random_ntp_server, kind="NetworkNTPServer")
-            name_server_obj = store.get(key=random_name_server, kind="NetworkNameServer")
-
-            mgmt_servers_obj = [name_server_obj, time_server_obj]
-
-        location_obj = await upsert_object(
-            client=client,
-            log=log,
-            branch=branch,
-            object_name=location_name,
-            kind_name=location_kind,
-            data=data,
-            store=store,
-            retrived_on_failure=True
-            )
-
-        await add_relationships(
-            client=client,
-            node_to_update=location_obj,
-            relation_to_update="network_management_servers",
-            related_nodes=mgmt_servers_obj,
-            branch=branch,
-            )
-        for mgmt_server_obj in mgmt_servers_obj:
-            log.info(f"- Add {mgmt_server_obj.name.value.title()} to {location_name.title()}")
-        if location_parent_name:
-            if location_parent_name not in parent_to_children:
-                parent_to_children[location_parent_name] = []
-
-            parent_to_children[location_parent_name].append(location_name)
-
-    for parent, children in parent_to_children.items():
-        parent_object = store.get(key=parent, kind=f"Location{[loc[2].title() for loc in LOCATIONS if loc[0] == parent][0]}")
-        if parent_object:
-            childs = []
-            for child_name in children:
-                child_kind = f"Location{[loc[2].title() for loc in LOCATIONS if loc[0] == child_name][0]}"
-                child_object = store.get(key=child_name, kind=child_kind)
-                if child_object:
-                    childs.append(child_object)
-            await add_relationships(
-                client=client,
-                node_to_update=parent_object,
-                relation_to_update="children",
-                related_nodes=childs,
-                branch=branch,
-            )
-            log.info(f"- Add {', '.join(children).title()} to {parent.title()}")
-
-    for location in LOCATIONS:
-        location_name = location[0]
-        location_short = location[1]
-        location_type = location[2]
-        location_parent_name = location[3]
-        location_timezone = location[4]
-        location_obj = store.get(key=location_name, kind=location_kind)
-
-        # if it's not a site, we don't create anything else
-        if location_type != "site":
-            continue
+    for location in site_locations:
+        location_name = location["name"]
+        location_shortname = location["shortname"]
 
         # We cut the prefixes attribued to the Location
-        location_supernet = LOCATION_SUPERNETS[location_name]
+        location_supernet = LOCATION_SUPERNETS[location_shortname]
         location_loopback_pool = list(location_supernet.subnets(new_prefix=24))[-1]
         location_p2p_pool = list(location_supernet.subnets(new_prefix=24))[-2]
 
-        location_mgmt_pool = LOCATION_MGMTS[location_name]
+        location_mgmt_pool = LOCATION_MGMTS[location_shortname]
         # mgmt_address_pool = location_mgmt.hosts()
 
-        location_external_net = LOCATION_EXTERNAL_NETS[location_name]
+        location_external_net = LOCATION_EXTERNAL_NETS[location_shortname]
         location_prefixes = [
             location_external_net,
             location_loopback_pool,
@@ -208,11 +459,12 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
         # --------------------------------------------------
         # Create VLANs
         # --------------------------------------------------
+        location_obj = store.get(key=location_name, kind="LocationBuilding")
         batch = await client.create_batch()
         location_id = location_obj.id
         for vlan in VLANS:
             role = vlan[1]
-            vlan_name = f"{location_short.lower()}_{vlan[1]}"
+            vlan_name = f"{location_shortname.lower()}_{vlan[1]}"
 
             data={
                 "name": {"value": vlan_name, "is_protected": True, "source": account_pop.id},
@@ -235,14 +487,14 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
         async for node, _ in batch.execute():
             log.info(f"- Created {node._schema.kind} - {node.name.value}")
 
-        mgmt_vlan = store.get(key=f"{location_short.lower()}_management", kind="InfraVLAN")
+        mgmt_vlan = store.get(key=f"{location_shortname.lower()}_management", kind="InfraVLAN")
 
         # --------------------------------------------------
         # Create Prefix
         # --------------------------------------------------
         batch = await client.create_batch()
         # Create Supernet
-        supernet_description = f"{location_short.lower()}-supernet-{IPv4Network(location_supernet).network_address}"
+        supernet_description = f"{location_shortname.lower()}-supernet-{IPv4Network(location_supernet).network_address}"
         data = {
             "prefix":  {"value": location_supernet },
             "description": {"value": supernet_description},
@@ -266,16 +518,16 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
             vlan_id = None
             if any(prefix.subnet_of(external_net) for external_net in EXTERNAL_NETWORKS):
                 prefix_status = "active"
-                prefix_description = f"{location_short.lower()}-ext-{IPv4Network(prefix).network_address}"
+                prefix_description = f"{location_shortname.lower()}-ext-{IPv4Network(prefix).network_address}"
                 prefix_role = "public"
             elif prefix.subnet_of(location_mgmt_pool):
                 prefix_status = "active"
-                prefix_description = f"{location_short.lower()}-mgmt-{IPv4Network(prefix).network_address}"
+                prefix_description = f"{location_shortname.lower()}-mgmt-{IPv4Network(prefix).network_address}"
                 prefix_role = "management"
                 vlan_id = mgmt_vlan.id
             else:
                 prefix_status = "reserved"
-                prefix_description = f"{location_short.lower()}-int-{IPv4Network(prefix).network_address}"
+                prefix_description = f"{location_shortname.lower()}-int-{IPv4Network(prefix).network_address}"
                 if prefix.subnet_of(location_loopback_pool):
                     prefix_role = "loopback"
                 else:

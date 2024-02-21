@@ -60,7 +60,8 @@ nodes:
     label: "Topology"
     icon: "carbon:network-3"
     default_filter: name__value
-    display_labels: [name__value]
+    display_labels:
+      - name__value
     order_by: [name__value]
     inherit_from:
       - CoreArtifactTarget
@@ -102,6 +103,8 @@ nodes:
     include_in_menu: false
     default_filter: name__value
     order_by: [name__value]
+    display_labels:
+      - name__value
     attributes:
       - name: underlay
         kind: Dropdown
@@ -132,6 +135,8 @@ nodes:
     include_in_menu: false
     default_filter: name__value
     order_by: [name__value]
+    display_labels:
+      - name__value
     attributes:
       - name: underlay
         kind: Dropdown
@@ -159,6 +164,8 @@ nodes:
     menu_placement: "TopologyTopology"
     default_filter: name__value
     order_by: [name__value]
+    display_labels:
+      - name__value
     inherit_from:
       - TopologyGenericElement
     attributes:

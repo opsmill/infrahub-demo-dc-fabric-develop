@@ -291,7 +291,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
 
     locations_vlans = await client.filters(kind="InfraVLAN", location__shortname__value=location_shortname, branch=branch)
     populate_local_store(objects=locations_vlans, key_type="name", store=store)
-    vlan_server = store.get(key=f"{location_shortname}_server", kind="InfraVLAN")
+    vlan_server = store.get(key=f"{location_shortname.lower()}_server", kind="InfraVLAN")
 
     # Using Prefix role to knwow which network to use. Role to Prefix should help avoid doing this
     locations_subnets = await client.filters(kind="InfraPrefix", location__shortname__value=location_shortname, branch=branch)
@@ -342,7 +342,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
             device_name = f"{topology_name}-{device_role_name}{id}"
             data={
                 "name": {"value": device_name, "source": account_pop.id, "is_protected": True},
-                "site": {"id": location_id, "source": account_pop.id, "is_protected": True},
+                "location": {"id": location_id, "source": account_pop.id, "is_protected": True},
                 "status": {"value": ACTIVE_STATUS, "owner": account_ops.id},
                 "device_type": {"id": device_type.id, "source": account_pop.id},
                 "role": {"value": device_role_name, "source": account_pop.id, "is_protected": True, "owner": account_eng.id},

@@ -151,7 +151,6 @@ generics:
     relationships:
       - name: device
         peer: InfraDevice
-        identifier: "device__interface"
         optional: false
         cardinality: one
         kind: Parent
@@ -219,42 +218,95 @@ generics:
         kind: Component
 nodes:
   # --------------------  Locations  --------------------
-  - name: Region
+  - name: Continent
     namespace: Location
-    icon: "jam:world"
+    inherit_from: ["LocationGeneric"]
     include_in_menu: true
     menu_placement: "LocationGeneric"
-    label: "Region"
-    inherit_from: ["LocationGeneric"]
+    label: Continent
+    display_labels:
+      - name__value
     parent: ""
     children: "LocationCountry"
+    icon: "jam:world"
   - name: Country
     namespace: Location
+    inherit_from: ["LocationGeneric"]
+    include_in_menu: true
+    menu_placement: "LocationGeneric"
+    label: Country
+    display_labels:
+      - name__value
+    parent: "LocationContinent"
+    children: "LocationRegion"
     icon: "gis:search-country"
-    include_in_menu: true
-    menu_placement: "LocationGeneric"
-    label: "Country"
-    inherit_from: ["LocationGeneric"]
-    parent: "LocationRegion"
-    children: "LocationSite"
-  - name: Site
+  - name: Region
     namespace: Location
-    icon: "ri:building-line"
+    inherit_from: ["LocationGeneric"]
     include_in_menu: true
     menu_placement: "LocationGeneric"
-    label: "Site"
-    inherit_from: ["LocationGeneric"]
+    label: Region
+    display_labels:
+      - name__value
     parent: "LocationCountry"
+    children: "LocationMetro"
+    icon: "carbon:cics-region-target"
+  - name: Metro
+    namespace: Location
+    inherit_from: ["LocationGeneric"]
+    include_in_menu: true
+    menu_placement: "LocationGeneric"
+    label: Metro
+    display_labels:
+      - name__value
+    parent: "LocationRegion"
+    children: "LocationBuilding"
+    icon: "healthicons:city"
+  - name: Building
+    namespace: Location
+    inherit_from: ["LocationGeneric"]
+    include_in_menu: true
+    menu_placement: "LocationGeneric"
+    label: Building
+    display_labels:
+      - name__value
+    parent: "LocationMetro"
+    children: "LocationFloor"
+    icon: "ri:building-line"
+  - name: Floor
+    namespace: Location
+    inherit_from: ["LocationGeneric"]
+    include_in_menu: true
+    menu_placement: "LocationGeneric"
+    label: Floor
+    display_labels:
+      - name__value
+    parent: "LocationBuilding"
+    icon: "mdi:home-floor-0"
+    children: "LocationSuite"
+  - name: Suite
+    namespace: Location
+    inherit_from: ["LocationGeneric"]
+    include_in_menu: true
+    menu_placement: "LocationGeneric"
+    label: Suite
+    display_labels:
+      - name__value
+    parent: "LocationFloor"
     children: "LocationRack"
+    icon: "game-icons:cage"
   - name: Rack
     namespace: Location
-    icon: "clarity:rack-server-line"
-    include_in_menu: true
-    menu_placement: "LocationGeneric"
-    label: "Rack"
     inherit_from: ["LocationGeneric"]
-    parent: "LocationSite"
+    include_in_menu: true
+    label: Rack
+    display_labels:
+      - name__value
+    menu_placement: "LocationGeneric"
+    parent: "LocationSuite"
     children: ""
+    icon: "clarity:rack-server-line"
+
   # --------------------  Device (Models, Platforms, Device, Interfaces )  --------------------
   - name: DeviceType
     namespace: Infra
@@ -411,15 +463,14 @@ nodes:
             description: "Top of Rack part of a Fabric."
             color: "#e6e6fa"
     relationships:
-      - name: site
-        label: Site (Location)
+      - name: location
+        label: location
         peer: LocationGeneric
         optional: false
         cardinality: one
         kind: Attribute
       - name: interfaces
         peer: InfraInterface
-        identifier: "device__interface"
         optional: true
         cardinality: many
         kind: Component
@@ -580,8 +631,8 @@ nodes:
     inherit_from:
       - "InfraEndpoint"
     relationships:
-      - name: site
-        label: Site (Location)
+      - name: location
+        label: location
         peer: LocationGeneric
         optional: false
         cardinality: one

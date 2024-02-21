@@ -11,24 +11,29 @@ from utils import group_add_member, populate_local_store, upsert_object
 
 TOPOLOGY = (
     # name, description, Location shortname
-    ("fra02-pod1", "Small Fabric in Frankfurt 02", "fra02"),
-    ("ord01-pod1", "Medium Fabric in O'Hare 01", "ord01"),
-    ("atl01-pod1", "Medium Fabric in Atlanta 01", "atl01"),
+    ("fra05-pod1", "Small Fabric in Equinix FRA05", "FRA05"),
+    ("ams9-pod1", "Medium Fabric in Interxion AMS9", "AMS9"),
+    ("de1-pod1", "Medium Fabric in Equinix DE1", "DE1"),
+    ("de2-pod1", "Medium Fabric in Equinix DE2", "DE2"),
 )
 
 TOPOLOGY_ELEMENTS = {
     # Topology [ Quantity, Device Role, Device Type, mtu, mlag support ]
-    "fra02-pod1": [
+    "fra05-pod1": [
         ( 2, "spine", "CCS-720DP-48S-2F", 1500, True),
         ( 2, "leaf", "CCS-720DP-48S-2F", 1500, False),
     ],
-    "ord01-pod1": [
+    "ams9-pod1": [
         ( 2, "spine", "CCS-720DP-48S-2F", 9192, True),
         ( 6, "leaf", "NCS-5501-SE", 9192, True),
     ],
-    "atl01-pod1": [
+    "de1-pod1": [
         ( 4, "spine", "CCS-720DP-48S-2F", 9192, True),
         ( 8, "leaf", "NCS-5501-SE", 9192, True),
+    ],
+    "de2-pod1": [
+        ( 2, "spine", "CCS-720DP-48S-2F", 9192, True),
+        ( 1, "leaf", "NCS-5501-SE", 9192, True),
     ],
 }
 
