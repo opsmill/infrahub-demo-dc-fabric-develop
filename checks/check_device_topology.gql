@@ -5,7 +5,7 @@ query check_device_topology {
         name {
           value
         }
-        site {
+        location {
           node {
             name {
               value
@@ -15,6 +15,13 @@ query check_device_topology {
         role {
           value
         }
+        device_type {
+          node {
+            name {
+              value
+            }
+          }
+        }
       }
     }
   }
@@ -22,12 +29,12 @@ query check_device_topology {
     edges {
       node {
         elements {
-	  edges {
-	    node {
-	      id
-	      name {
-	        value
-	      }
+          edges {
+            node {
+              id
+              name {
+                value
+              }
               quantity {
                 value
               }
@@ -43,16 +50,16 @@ query check_device_topology {
                   }
                 }
               }
-	    }
-	  }
-	}
+            }
+          }
+        }
         location {
-	  node {
-	    name {
-	      value
-	    }
-	  }
-	}
+          node {
+            name {
+              value
+            }
+          }
+        }
       }
     }
   }
