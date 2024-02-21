@@ -45,6 +45,7 @@ query check_device_topology {
   TopologyTopology {
     edges {
       node {
+        id
         name {
           value
         }
