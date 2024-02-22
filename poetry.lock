@@ -533,13 +533,13 @@ files = [
 
 [[package]]
 name = "infrahub-sdk"
-version = "0.7.0"
+version = "0.8.0"
 description = "Python Client to interact with Infrahub"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "infrahub_sdk-0.7.0-py3-none-any.whl", hash = "sha256:bae4b1430b1f6e025ecea86bc21913f4acb12751caf5096e3334c32348ce7ba5"},
-    {file = "infrahub_sdk-0.7.0.tar.gz", hash = "sha256:a6c7b06b1953c5aa305955f2e974e92546b9dada36e844377288b2623b13c30f"},
+    {file = "infrahub_sdk-0.8.0-py3-none-any.whl", hash = "sha256:d07c6b7213d822414c841be262705af7f0448f991a2c8913510222a538ea3218"},
+    {file = "infrahub_sdk-0.8.0.tar.gz", hash = "sha256:5302796edcfc553cf43c67aa0700ab3f36ec009c7d6d5cce70cf922cd30cc2f9"},
 ]
 
 [package.dependencies]
@@ -1773,4 +1773,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10, < 3.12"
-content-hash = "11c0f24c1c381df27ce9b314b6eb27b23147058c9acc5d30233e3937f5ffbbed"
+content-hash = "3b28159735351186fd13241fc83c817ee3c84d073c4198e595b205d5b70ec2b8"
