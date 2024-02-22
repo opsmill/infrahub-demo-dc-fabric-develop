@@ -59,8 +59,8 @@ interface {{ intf.node.name.value }}
    ip ospf network point-to-point
 {%            endif %}
 {%         endfor %}
-!
 {%      endif %}
+!
 {%   endfor %}
 !
 ip routing
@@ -72,8 +72,6 @@ router bgp {{ data.InfraDevice.edges[0].node.asn.node.asn.value }}
    router-id {{ ns.loopback_ip }}
 !
 {%   endif %}
-!
-end
 {% else %}
 {# Warning: No Device found with this name #}
 {% endif %}

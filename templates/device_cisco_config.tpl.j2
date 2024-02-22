@@ -76,8 +76,8 @@ interface {{ intf.node.name.value }}
    ip ospf network point-to-point
 {%            endif %}
 {%         endfor %}
-!
 {%      endif %}
+!
 {%   endfor %}
 !
 ip prefix-list BOGON-Prefixes seq 10 permit 172.16.0.0/12 le 24
@@ -100,7 +100,6 @@ route-map BOGONS permit 10
 !
 route-map BOGONS deny 20
 !
-end
 {% else %}
 {# Warning: No Device found with this name #}
 {% endif %}
