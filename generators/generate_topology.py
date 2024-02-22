@@ -4,7 +4,7 @@ from collections import defaultdict
 from ipaddress import IPv4Network
 from typing import Any, Dict, List, Optional
 
-from infrahub_sdk import UUIDT, InfrahubClient, InfrahubNode, NodeStore
+from infrahub_sdk import InfrahubBatch, UUIDT, InfrahubClient, InfrahubNode, NodeStore
 
 from create_location import LOCATION_SUPERNETS, LOCATION_MGMTS, EXTERNAL_NETWORKS
 from utils import add_relationships, group_add_member, populate_local_store, upsert_object
@@ -178,7 +178,8 @@ async def upsert_interface(
         device_name: str,
         intf_name: str,
         data: Dict[str, Any],
-        store: NodeStore
+        store: NodeStore,
+        batch: Optional[InfrahubBatch] = None,
         )-> InfrahubNode:
 
     kind_name = data['kind_name']
@@ -199,6 +200,7 @@ async def upsert_interface(
         kind_name=kind_name,
         data=data,
         store=store,
+        batch=batch
     )
     return interface_obj
 
@@ -212,7 +214,8 @@ async def upsert_ip_address(
         description: str,
         account_pop_id: str,
         address: str,
-        store: NodeStore
+        store: NodeStore,
+        batch: Optional[InfrahubBatch] = None,
         ) -> None:
     if prefix_obj:
         prefix_id = prefix_obj.id
@@ -232,6 +235,7 @@ async def upsert_ip_address(
         kind_name="InfraIPAddress",
         data=data,
         store=store,
+        batch=batch,
     )
     return ip_obj
 
@@ -324,6 +328,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
     location_external_net_pool_iter = iter(list(location_external_net[0].prefix.value.subnets(new_prefix=31)))
     topology_elements = await client.filters(kind="TopologyPhysicalElement", topology__ids=topology.id, populate_store=True, prefetch_relationships=True)
 
+    batch = await client.create_batch()
     for topology_element in topology_elements:
         if not topology_element.device_type:
             log.info(f"No device_type for {topology_element.name.value} - Ignored")
@@ -416,7 +421,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 description=loopback_description,
                 account_pop_id=account_pop.id,
                 address=ip_loop,
-                store=store
+                store=store,
+                batch=batch
                 )
 
             # Management Interface
@@ -452,7 +458,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 description=mgmt_description,
                 account_pop_id=account_pop.id,
                 address=ip_mgmt,
-                store=store
+                store=store,
                 )
 
             # Set Mgmt IP as Primary IP
@@ -501,8 +507,28 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                     device_name=device_name,
                     intf_name=intf_name,
                     data=interface_data,
-                    store=store
+                    store=store,
+                    batch=batch
                 )
+    async for response, _ in batch.execute():
+        log.info(f"Created {response}")
+
+    batch = await client.create_batch()
+    for topology_element in topology_elements:
+        if not topology_element.device_type:
+            log.info(f"No device_type for {topology_element.name.value} - Ignored")
+            continue
+        device_type = await client.get(ids=topology_element.device_type.id, kind="InfraDeviceType")
+        if not device_type.platform.id:
+            log.info(f"No platform for {device_type.name.value} - Ignored")
+            continue
+        for id in range(1, int(topology_element.quantity.value)+1):
+            if device_role_name.lower() not in ["spine", "leaf"]:
+                continue
+
+            for intf_idx, intf_name in enumerate(DEVICES_INTERFACES[device_type_name]):
+                intf_role = INTERFACE_ROLES_MAPPING[device_role_name.lower()][intf_idx]
+                interface_description = f"{intf_role.title()}: {intf_name.lower().replace(' ', '')}.{device_name.lower()}"
 
                 # Creation IP for some L3 Interface
                 # FIXME Get back the prefix reference
@@ -522,8 +548,12 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                         description=interface_description,
                         account_pop_id=account_pop.id,
                         address=address,
-                        store=store
+                        store=store,
+                        batch=batch
                         )
+
+    async for response, _ in batch.execute():
+        log.info(f"Created {response}")
 
     #   -------------------- Connect Spines & Leafs --------------------
     #   - Cabling Spines to Leaf, Leaf to Leaf, Spine to Spine
@@ -534,6 +564,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
     leaf_uplink_interfaces = {}
     spine_peer_interfaces = {}
     leaf_peer_interfaces = {}
+    batch = await client.create_batch()
     for topology_element in topology_elements:
         if not topology_element.device_type:
             log.info(f"No device_type for {topology_element.name.value} - Ignored")
@@ -644,7 +675,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                         description=spine_ico_ip_description,
                         account_pop_id=account_pop.id,
                         address=spine_ip,
-                        store=store
+                        store=store,
+                        batch=batch
                         )
             await upsert_ip_address(
                         client=client,
@@ -656,7 +688,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                         description=leaf_ico_ip_description,
                         account_pop_id=account_pop.id,
                         address=leaf_ip,
-                        store=store
+                        store=store,
+                        batch=batch
                         )
 
             # Delete the other interface.connected_endpoint
@@ -729,6 +762,9 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
             intf_spine2_obj.connected_endpoint = intf_spine1_obj
             await intf_spine2_obj.save()
 
+    async for response, _ in batch.execute():
+        log.info(f"Created {response}")
+
     #   ---------- iBGP Logic    ----------
     # Create iBGP Sessions within the Site
     # TODO
@@ -765,17 +801,11 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs
         device_types=await client.all("InfraDeviceType")
         populate_local_store(objects=device_types, key_type="name", store=store)
 
-        devices=await client.all("InfraDevice")
-        populate_local_store(objects=devices, key_type="name", store=store)
-
         prefixes=await client.all("InfraPrefix")
         populate_local_store(objects=prefixes, key_type="prefix", store=store)
 
         topologies=await client.all("TopologyTopology")
         populate_local_store(objects=topologies, key_type="name", store=store)
-
-        # topology_elements=await client.all("TopologyGenericElement")
-        # populate_local_store(objects=topology_elements, key_type="name", store=store)
 
         locations=await client.all("LocationGeneric", populate_store=True)
         populate_local_store(objects=locations, key_type="name", store=store)
@@ -818,6 +848,7 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs
                 log=log
                 )
         except ValueError:
+            # You should end-up here if topology.location.peer is not set
             continue
 
     if batch.num_tasks < 1:
@@ -826,5 +857,5 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs
         else:
             log.info(f"No Topologies found")
     else:
-        async for _, response in batch.execute():
+        async for response, _ in batch.execute():
             log.debug(f"Topology {response} Creation Completed")
