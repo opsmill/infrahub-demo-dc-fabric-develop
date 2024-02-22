@@ -28,7 +28,6 @@ class InfrahubCheckDeviceTopology(InfrahubCheck):
                     message=f"No corresponding group found for topology {topology_name}."
                 )
                 continue
-            print(f"group_name={group_name}")
             group_device_ids = group_devices[group_name]
             expected_role_device_counts = {}
 
