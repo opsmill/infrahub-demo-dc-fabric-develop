@@ -89,8 +89,8 @@ ip routing
 !
 ip route 0.0.0.0/0 {{ ns.mangement_gw_ip }}
 !
-{%   if data.data.InfraDevice.edges[0].node.asn %}
-router bgp {{ data.data.InfraDevice.edges[0].node.asn.node.asn.value }}
+{%   if data.InfraDevice.edges[0].node.asn %}
+router bgp {{ data.InfraDevice.edges[0].node.asn.node.asn.value }}
    router-id {{ ns.loopback_ip }}
 !
 {%   endif %}
