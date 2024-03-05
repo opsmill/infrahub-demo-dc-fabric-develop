@@ -2,7 +2,7 @@
 ---
 version: '1.0'
 generics:
-  - name: Generic #Location
+  - name: Generic
     namespace: Location
     description: "Generic Location Interface."
     label: "Location"
@@ -215,7 +215,7 @@ generics:
         optional: true
         cardinality: many
         kind: Component
-  - name: Generic #Organization
+  - name: Generic
     namespace: Organization
     label: Organization
     description: An organization represent a legal entity, a company.
@@ -583,7 +583,7 @@ nodes:
     menu_placement: "InfraDevice"
     include_in_menu: true
     display_labels:
-      - description__value
+      - name__value
     order_by:
       - name__value
     inherit_from:
@@ -1149,10 +1149,10 @@ nodes:
         order_weight: 1600
 
   # --------------------  Network Management Servers --------------------
-  - name: DHCPOption
+  - name: DhcpOption
     namespace: Network
-    description: "Represents a configurable option within a DHCP server."
-    label: "DHCP Option"
+    description: "Represents a configurable option within a Dhcp server."
+    label: "Dhcp Option"
     icon: "gis:globe-options"
     menu_placement: "NetworkMangementServer"
     include_in_menu: false
@@ -1173,10 +1173,10 @@ nodes:
       - name: content
         kind: Text
         order_weight: 2100
-  - name: DHCPServer
+  - name: DhcpServer
     namespace: Network
-    description: "Represents a DHCP server in the network."
-    label: "DHCP Server"
+    description: "Represents a Dhcp server in the network."
+    label: "Dhcp Server"
     icon: "eos-icons:ip"
     menu_placement: "NetworkMangementServer"
     include_in_menu: false
@@ -1191,7 +1191,7 @@ nodes:
         order_weight: 2100
     relationships:
       - name: dhcp_options
-        peer: NetworkDHCPOption
+        peer: NetworkDhcpOption
         optional: true
         cardinality: many
         kind: Component
