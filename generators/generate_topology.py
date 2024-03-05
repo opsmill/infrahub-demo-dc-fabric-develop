@@ -875,7 +875,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                     )
 
         # Cabling BorderLeaf
-        if border_leaf_quantity > 0
+        if border_leaf_quantity > 0:
             for leaf_idx in range(1, border_leaf_quantity + 1):
                 if leaf_idx > len(spine_uplink_interfaces):
                     log.error(f"The quantity of borderleaf requested ({border_leaf_quantity}) is superior to the number of interfaces flagged as 'uplink' ({len(spine_uplink_interfaces)})")
