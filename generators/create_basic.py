@@ -10,6 +10,7 @@ from utils import upsert_object
 ACCOUNTS = (
     # name, pasword, type, role
     ("pop-builder", "Script", "Password123", "read-write"),
+    ("generator", "Script", "Password123", "read-write"),
     ("CRM Synchronization", "Script", "Password123", "read-write"),
     ("Jack Bauer", "User", "Password123", "read-only"),
     ("Chloe O'Brian", "User", "Password123", "read-write"),
@@ -22,25 +23,51 @@ ACCOUNTS = (
 TAGS = ["blue", "green", "red"]
 
 ORGANIZATIONS = (
-    # name, ASN
-    ["Arelion", 1299],
-    ["Colt Technology Services", 8220],
-    ["Verizon Business", 701],
-    ["GTT Communications", 3257],
-    ["Hurricane Electric", 6939],
-    ["Lumen", 3356],
-    ["Zayo", 6461],
-    ["Duff", 64496],
-    ["Equinix", 24115],
-    ["PCCW Global", 3491],
-    ["Orange S.A", 5511],
-    ["Tata Communications", 6453],
-    ["Sprint", 1239],
-    ["NTT America", 2914],
-    ["Cogent Communications", 174],
-    ["Comcast Cable Communication", 7922],
-    ["Telecom Italia Sparkle", 6762],
-    ["AT&T Services", 7018]
+    # name, type
+    ("Arelion", "provider"),
+    ("Colt Technology Services", "provider"),
+    ("Verizon Business", "provider"),
+    ("GTT Communications", "provider"),
+    ("Hurricane Electric", "provider"),
+    ("Lumen", "provider"),
+    ("Zayo", "provider"),
+    ("Equinix", "provider"),
+    ("Interxion", "provider"),
+    ("PCCW Global", "provider"),
+    ("Orange S.A", "provider"),
+    ("Tata Communications", "provider"),
+    ("Sprint", "provider"),
+    ("NTT America", "provider"),
+    ("Cogent Communications", "provider"),
+    ("Comcast Cable Communication", "provider"),
+    ("Telecom Italia Sparkle", "provider"),
+     ("AT&T Services", "provider"),
+    ("Duff", "tenant"),
+    ("Juniper", "manufacturer"),
+    ("Cisco", "manufacturer"),
+    ("Arista", "manufacturer"),
+)
+
+ASNS = (
+    # asn, organization
+    (1299,  "Arelion"),
+    (8220,  "Colt Technology Services"),
+    (701,  "Verizon Business"),
+    (3257,  "GTT Communications"),
+    (6939,  "Hurricane Electric"),
+    (3356,  "Lumen"),
+    (6461,  "Zayo"),
+    (24115,  "Equinix"),
+    (20710,  "Interxion"),
+    (3491,  "PCCW Global"),
+    (5511,  "Orange S.A"),
+    (6453,  "Tata Communications"),
+    (1239,  "Sprint"),
+    (2914,  "NTT America"),
+    (174,  "Cogent Communications"),
+    (7922,  "Comcast Cable Communication"),
+    (6762,  "Telecom Italia Sparkle"),
+    (7018,  "AT&T Services")
 )
 
 PLATFORMS = (
@@ -113,28 +140,6 @@ async def create_bascis(
             )
 
     # ------------------------------------------
-    # Create Platform
-    # ------------------------------------------
-    for platform in PLATFORMS:
-       data={
-           "name": platform[0],
-           "nornir_platform": platform[1],
-           "napalm_driver": platform[2],
-           "netmiko_device_type": platform[3],
-           "ansible_network_os": platform[4],
-        }
-       await upsert_object(
-            client=client,
-            log=log,
-            branch=branch,
-            object_name=platform[0],
-            kind_name="InfraPlatform",
-            data=data,
-            store=store,
-            batch=batch
-            )
-
-    # ------------------------------------------
     # Create Standard Demo Groups
     # ------------------------------------------
     for group in GROUPS:
@@ -154,13 +159,14 @@ async def create_bascis(
             )
 
     async for node, _ in batch.execute():
-        log.info(f"- Created {node._schema.kind} - {node.name.value}")
+        accessor = f"{node._schema.default_filter.split('__')[0]}"
+        log.info(f"- Created {node._schema.kind} - {getattr(node, accessor).value}")
 
     # ------------------------------------------
     # Create Organization & Autonomous System
     # ------------------------------------------
     log.info("Creating Organizations, and Autonomous Systems")
-    account = store.get("pop-builder", kind="CoreAccount")
+    account = store.get("CRM Synchronization", kind="CoreAccount")
     account2 = store.get("Chloe O'Brian", kind="CoreAccount")
     # Organization
     batch = await client.create_batch()
@@ -173,39 +179,66 @@ async def create_bascis(
             log=log,
             branch=branch,
             object_name=org[0],
-            kind_name="CoreOrganization",
+            kind_name=f"Organization{org[1].title()}",
             data=data_org,
             store=store,
             batch=batch
             )
     async for node, _ in batch.execute():
-        log.info(f"- Created {node._schema.kind} - {node.name.value}")
-    # Autonomous System
-    batch = await client.create_batch()
-    for org in ORGANIZATIONS:
+        accessor = f"{node._schema.default_filter.split('__')[0]}"
+        log.info(f"- Created {node._schema.kind} - {getattr(node, accessor).value}")
 
-        if len(org) == 2 and isinstance(org[1], int):
-            data_asn={
-                "name": {"value": f"AS{org[1]}", "source": account.id, "owner": account2.id},
-                "asn": {"value": org[1], "source": account.id, "owner": account2.id},
-                "organization": {"id": store.get(kind="CoreOrganization", key=org[0]).id, "source": account.id},
-            }
-            await upsert_object(
-                client=client,
-                log=log,
-                branch=branch,
-                object_name=f"AS{org[1]}",
-                kind_name="InfraAutonomousSystem",
-                data=data_asn,
-                store=store,
-                batch=batch
-                )
+    # Autonomous System
+    organizations_dict = {name: type for name, type in ORGANIZATIONS}
+    batch = await client.create_batch()
+    for asn in ASNS:
+        organization_type = organizations_dict.get(asn[1], None)
+        asn_name  = f"AS{asn[0]}"
+        data_asn={
+            "name": {"value": asn_name, "source": account.id, "owner": account2.id},
+            "asn": {"value": asn[0], "source": account.id, "owner": account2.id},
+        }
+        if organization_type:
+            data_asn["description"] = {"value": f"{asn_name} for {asn[1]}", "source": account.id, "owner": account2.id}
+            data_asn["organization"] = {"id": store.get(kind=f"Organization{organization_type.title()}", key=asn[1]).id, "source": account.id}
+        else:
+            data_asn["description"] = {"value": f"{asn_name}", "source": account.id, "owner": account2.id}
+        await upsert_object(
+            client=client,
+            log=log,
+            branch=branch,
+            object_name=f"AS{asn[0]}",
+            kind_name="InfraAutonomousSystem",
+            data=data_asn,
+            store=store,
+            batch=batch
+            )
+    # Generate 11 private ASNs for Duff
+    for asn in range(65000, 65010):
+        data_asn = {
+            "name": {"value": f"AS{asn}", "source": account.id, "owner": account2.id},
+            "asn": {"value": asn, "source": account.id, "owner": account2.id},
+            "description": {"value": f"Private ASN {asn_name} for Duff", "source": account.id, "owner": account2.id},
+            "organization": {"id": store.get(kind="OrganizationTenant", key="Duff").id, "source": account.id},
+        }
+        await upsert_object(
+            client=client,
+            log=log,
+            branch=branch,
+            object_name=f"AS{asn}",
+            kind_name="InfraAutonomousSystem",
+            data=data_asn,
+            store=store,
+            batch=batch
+        )
     async for node, _ in batch.execute():
-        log.info(f"- Created {node._schema.kind} - {node.name.value}")
+        accessor = f"{node._schema.default_filter.split('__')[0]}"
+        log.info(f"- Created {node._schema.kind} - {getattr(node, accessor).value}")
+
     # ------------------------------------------
     # Create Tags
     # ------------------------------------------
-    account = store.get("pop-builder")
+    account = store.get("CRM Synchronization")
     batch = await client.create_batch()
     log.info("Creating Tags")
     for tag in TAGS:
@@ -223,13 +256,47 @@ async def create_bascis(
             batch=batch
             )
     async for node, _ in batch.execute():
-        log.info(f"- Created {node._schema.kind} - {node.name.value}")
+        accessor = f"{node._schema.default_filter.split('__')[0]}"
+        log.info(f"- Created {node._schema.kind} - {getattr(node, accessor).value}")
+
+    # ------------------------------------------
+    # Create Platform
+    # ------------------------------------------
+    batch = await client.create_batch()
+    for platform in PLATFORMS:
+       manufacturer_name = platform[0].split()[0].title()
+       manufacturer = store.get(key=manufacturer_name, kind="OrganizationManufacturer", raise_when_missing=False)
+       data={
+           "name": platform[0],
+            "nornir_platform": platform[1],
+            "napalm_driver": platform[2],
+            "netmiko_device_type": platform[3],
+            "ansible_network_os": platform[4],
+        }
+       if manufacturer:
+           data["manufacturer"] = {"id": manufacturer.id }
+       await upsert_object(
+           client=client,
+           log=log,
+           branch=branch,
+           object_name=platform[0],
+           kind_name="InfraPlatform",
+           data=data,
+           store=store,
+           batch=batch
+        )
+    async for node, _ in batch.execute():
+        accessor = f"{node._schema.default_filter.split('__')[0]}"
+        log.info(f"- Created {node._schema.kind} - {getattr(node, accessor).value}")
+
     # ------------------------------------------
     # Create Standard Device Type
     # ------------------------------------------
     batch = await client.create_batch()
     log.info("Creating Standard Device Type")
     for device_type in DEVICE_TYPES:
+       manufacturer_name = device_type[4].split()[0].title()
+       manufacturer = store.get(key=manufacturer_name, kind="OrganizationManufacturer", raise_when_missing=False)
        platform_id = store.get(kind="InfraPlatform", key=device_type[4]).id
        data = {
            "name": { "value": device_type[0]},
@@ -238,18 +305,22 @@ async def create_bascis(
            "full_depth": { "value": device_type[3]},
            "platform": { "id": platform_id},
         }
+       if manufacturer:
+           data["manufacturer"] = {"id": manufacturer.id }
        await upsert_object(
-            client=client,
-            log=log,
-            branch=branch,
-            object_name=device_type[0],
-            kind_name="InfraDeviceType",
-            data=data,
-            store=store,
-            batch=batch
-            )
+           client=client,
+           log=log,
+           branch=branch,
+           object_name=device_type[0],
+           kind_name="InfraDeviceType",
+           data=data,
+           store=store,
+           batch=batch
+       )
     async for node, _ in batch.execute():
-        log.info(f"- Created {node._schema.kind} - {node.name.value}")
+        accessor = f"{node._schema.default_filter.split('__')[0]}"
+        log.info(f"- Created {node._schema.kind} - {getattr(node, accessor).value}")
+
     # ------------------------------------------
     # Create BGP Peer Groups
     # ------------------------------------------
@@ -285,7 +356,8 @@ async def create_bascis(
             )
 
     async for node, _ in batch.execute():
-        log.info(f"- Created {node._schema.kind} - {node.name.value}")
+        accessor = f"{node._schema.default_filter.split('__')[0]}"
+        log.info(f"- Created {node._schema.kind} - {getattr(node, accessor).value}")
 
 # ---------------------------------------------------------------
 # Use the `infrahubctl run` command line to execute this script

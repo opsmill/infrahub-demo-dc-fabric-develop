@@ -173,6 +173,11 @@ nodes:
         kind: Number
         default_value: 1500
         order_weight: 3000
+      - name: border
+        kind: Boolean
+        label: "Is a Topology Border"
+        default_value: false
+        order_weight: 2400
       - name: mlag_support
         kind: Boolean
         label: "MLAG Support"

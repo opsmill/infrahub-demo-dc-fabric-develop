@@ -2,7 +2,7 @@
 ---
 version: '1.0'
 generics:
-  - name: Generic
+  - name: Generic #Location
     namespace: Location
     description: "Generic Location Interface."
     label: "Location"
@@ -17,7 +17,6 @@ generics:
     attributes:
       - name: name
         kind: Text
-        unique: true
         order_weight: 1000
       - name: shortname
         kind: Text
@@ -216,6 +215,36 @@ generics:
         optional: true
         cardinality: many
         kind: Component
+  - name: Generic #Organization
+    namespace: Organization
+    label: Organization
+    description: An organization represent a legal entity, a company.
+    default_filter: name__value
+    icon: mdi:domain
+    include_in_menu: true
+    attributes:
+      - name: name
+        kind: Text
+        unique: true
+        order_weight: 1000
+      - name: description
+        kind: Text
+        optional: true
+        order_weight: 1200
+    relationships:
+      - name: tags
+        peer: BuiltinTag
+        cardinality: many
+        kind: Attribute
+        optional: true
+        order_weight: 3000
+      - name: asn
+        label: "Autonomous System"
+        cardinality: many
+        optional: true
+        peer: InfraAutonomousSystem
+        order_weight: 2000
+
 nodes:
   # --------------------  Locations  --------------------
   - name: Continent
@@ -273,6 +302,17 @@ nodes:
     parent: "LocationMetro"
     children: "LocationFloor"
     icon: "ri:building-line"
+    attributes:
+      - name: facility_id
+        kind: Text
+        unique: false
+        optional: True
+        order_weight: 1100
+    relationships:
+      - name: owner
+        peer: OrganizationGeneric
+        optional: true
+        cardinality: one
   - name: Floor
     namespace: Location
     inherit_from: ["LocationGeneric"]
@@ -295,17 +335,40 @@ nodes:
     parent: "LocationFloor"
     children: "LocationRack"
     icon: "game-icons:cage"
+    attributes:
+      - name: facility_id
+        kind: Text
+        unique: false
+        optional: True
+        order_weight: 1100
+    relationships:
+      - name: owner
+        peer: OrganizationGeneric
+        optional: true
+        cardinality: one
   - name: Rack
     namespace: Location
     inherit_from: ["LocationGeneric"]
     include_in_menu: true
     label: Rack
+    default_filter: shortname__value
     display_labels:
       - name__value
     menu_placement: "LocationGeneric"
     parent: "LocationSuite"
     children: ""
     icon: "clarity:rack-server-line"
+    attributes:
+      - name: facility_id
+        kind: Text
+        unique: false
+        optional: True
+        order_weight: 1100
+    relationships:
+      - name: owner
+        peer: OrganizationGeneric
+        optional: true
+        cardinality: one
 
   # --------------------  Device (Models, Platforms, Device, Interfaces )  --------------------
   - name: DeviceType
@@ -354,6 +417,11 @@ nodes:
         cardinality: one
         kind: Attribute
         order_weight: 1300
+      - name: manufacturer
+        peer: OrganizationManufacturer
+        cardinality: one
+        kind: Attribute
+        order_weight: 1250
       - name: tags
         peer: BuiltinTag
         optional: true
@@ -375,26 +443,38 @@ nodes:
       - name: name
         kind: Text
         unique: true
+        order_weight: 1000
       - name: description
         kind: Text
         optional: true
+        order_weight: 1200
       - name: nornir_platform
         kind: Text
         optional: true
+        order_weight: 1500
       - name: napalm_driver
         kind: Text
         optional: true
+        order_weight: 1600
       - name: netmiko_device_type
         kind: Text
         optional: true
+        order_weight: 1700
       - name: ansible_network_os
         kind: Text
         optional: true
+        order_weight: 1800
     relationships:
       - name: devices
         peer: InfraDevice
         optional: true
         cardinality: many
+        order_weight: 1350
+      - name: manufacturer
+        peer: OrganizationManufacturer
+        cardinality: one
+        kind: Attribute
+        order_weight: 1300
   - name: Device
     namespace: Infra
     description: "Generic Device object."
@@ -503,7 +583,7 @@ nodes:
     menu_placement: "InfraDevice"
     include_in_menu: true
     display_labels:
-      - name__value
+      - description__value
     order_by:
       - name__value
     inherit_from:
@@ -551,6 +631,7 @@ nodes:
         cardinality: one
         kind: Component
         identifier: interface_l2__tagged_vlan
+
   # --------------------  Circuits  --------------------
   - name: Circuit
     namespace: Infra
@@ -609,8 +690,7 @@ nodes:
             color: "#85db9b"
     relationships:
       - name: provider
-        label: "Provider (Organization)"
-        peer: CoreOrganization
+        peer: OrganizationProvider
         optional: false
         cardinality: one
         kind: Attribute
@@ -644,13 +724,14 @@ nodes:
         optional: false
         cardinality: one
         kind: Parent
+
   # --------------------  BGP (ASN, BGP Groups, BGP Sessions)  --------------------
   - name: AutonomousSystem
     namespace: Infra
     description: "An Autonomous System (AS) is a set of Internet routable IP prefixes belonging to a network"
     label: "Autonomous System"
     icon: "mdi:bank-circle-outline"
-    # menu_placement: InfraBGPSession
+    menu_placement: InfraBGPSession
     default_filter: name__value
     order_by: ["asn__value"]
     display_labels:
@@ -668,9 +749,19 @@ nodes:
         optional: true
     relationships:
       - name: organization
-        peer: CoreOrganization
+        peer: OrganizationGeneric
         optional: false
         cardinality: one
+        kind: Attribute
+      - name: location
+        peer: LocationGeneric
+        optional: true
+        cardinality: one
+        kind: Attribute
+      - name: devices
+        peer: InfraDevice
+        optional: true
+        cardinality: many
         kind: Attribute
   - name: BGPPeerGroup
     namespace: Infra
@@ -678,7 +769,7 @@ nodes:
     label: "BGP Peer Group"
     icon: "mdi:view-grid-plus-outline"
     menu_placement: InfraBGPSession
-    include_in_menu: false
+    include_in_menu: true
     default_filter: name__value
     order_by:
       - name__value
@@ -719,7 +810,9 @@ nodes:
     order_by:
       - device__name__value
       - remote_as__asn__value
-    include_in_menu: false
+    display_labels:
+      - description__value
+    include_in_menu: true
     attributes:
       - name: type
         kind: Text
@@ -807,34 +900,70 @@ nodes:
         cardinality: one
         kind: Attribute
 
-  # --------------------  Organization  --------------------
-  - name: Organization
-    namespace: Core
-    label: Organization
-    description: An organization represent a legal entity, a company.
+  # --------------------  Organizations  --------------------
+  - name: Manufacturer
+    namespace: Organization
+    description: Device Manufacturer
     default_filter: name__value
-    display_labels: [label__value]
     order_by: [name__value]
+    display_labels:
+      - name__value
     icon: mdi:domain
+    inherit_from:
+      - OrganizationGeneric
     include_in_menu: true
-
-    attributes:
-      - kind: Text
-        name: name
-        unique: true
-      - kind: Text
-        name: label
-        optional: true
-      - kind: Text
-        name: description
-        optional: true
-
+    menu_placement: OrganizationGeneric
     relationships:
-      - cardinality: many
-        kind: Attribute
-        name: tags
+      - name: device_type
+        peer: InfraDeviceType
+        cardinality: many
         optional: true
-        peer: BuiltinTag
+      - name: platform
+        peer: InfraPlatform
+        cardinality: many
+        optional: true
+  - name: Provider
+    namespace: Organization
+    description: Circuit or Location Provider
+    default_filter: name__value
+    order_by: [name__value]
+    display_labels:
+      - name__value
+    icon: mdi:domain
+    inherit_from:
+      - OrganizationGeneric
+    include_in_menu: true
+    menu_placement: OrganizationGeneric
+    relationships:
+      - name: location
+        peer: LocationBuilding
+        cardinality: many
+        optional: true
+      - name: circuit
+        peer: InfraCircuit
+        cardinality: many
+        optional: true
+  - name: Tenant
+    namespace: Organization
+    description: Customer
+    default_filter: name__value
+    order_by: [name__value]
+    display_labels:
+      - name__value
+    icon: mdi:domain
+    inherit_from:
+      - OrganizationGeneric
+    include_in_menu: true
+    menu_placement: OrganizationGeneric
+    relationships:
+      - name: location
+        peer: LocationBuilding
+        cardinality: many
+        optional: true
+      - name: circuit
+        peer: InfraCircuit
+        cardinality: many
+        optional: true
 
   # --------------------  IPAM (VLAN, Prefix, IP Address)  --------------------
   - name: IPAddress
@@ -957,22 +1086,39 @@ nodes:
             label: Reserved
       - name: role
         kind: Dropdown
+        optional: true
         choices:
           - name: loopback
             label: Loopback
+            description: "Represents internal communications."
+            color: "#B0A8B9"
           - name: management
             label: Management
+            description: "Handles administrative operations."
+            color: "#AEC6CF"
           - name: public
             label: Public
+            description: "Public facing network."
+            color: "#FDFD96"
           - name: server
             label: Server
+            description: "Dedicated to server functions."
+            color: "#77DD77"
           - name: supernet
             label: Supernet
+            description: "Covers multiple networks"
+            color: "#FFB347"
           - name: technical
             label: Technical
+            description: "Focused on technical aspects."
+            color: "#9678B6"
+          - name: loopback-vtep
+            label: Loopback VTEP
+            description: "Facilitates virtualized network communications within loopback configurations."
+            color: "#CDB4DB"
     relationships:
       - name: organization
-        peer: CoreOrganization
+        peer: OrganizationGeneric
         optional: true
         cardinality: one
         kind: Attribute
@@ -1002,7 +1148,7 @@ nodes:
         kind: Component
         order_weight: 1600
 
-  # --------------------  Network Management  --------------------
+  # --------------------  Network Management Servers --------------------
   - name: DHCPOption
     namespace: Network
     description: "Represents a configurable option within a DHCP server."
