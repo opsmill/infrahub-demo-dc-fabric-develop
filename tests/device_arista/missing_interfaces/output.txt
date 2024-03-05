@@ -1,0 +1,82 @@
+
+! Device Basic Configuration
+hostname fra05-pod1-spine1
+!
+ntp server  time1.google.com
+!
+ip name-server 8.8.8.8
+!
+! Interface Configuration
+interface Ethernet1
+  description "Leaf: ethernet1.fra05-pod1-spine1 to ethernet10.fra05-pod1-leaf1"
+   ip address 10.0.254.0/31
+   no switchport
+!
+interface Ethernet10
+  description "Leaf: ethernet10.fra05-pod1-spine1"
+!
+interface Ethernet11
+  description "Uplink: ethernet11.fra05-pod1-spine1 to ethernet10.fra05-pod1-borderleaf1"
+   ip address 10.0.254.8/31
+   no switchport
+!
+interface Ethernet12
+  description "Uplink: ethernet12.fra05-pod1-spine1 to ethernet10.fra05-pod1-borderleaf2"
+   ip address 10.0.254.12/31
+   no switchport
+!
+interface Ethernet13
+  description "Spare: ethernet13.fra05-pod1-spine1"
+!
+interface Ethernet14
+  description "Spare: ethernet14.fra05-pod1-spine1"
+!
+interface Ethernet2
+  description "Leaf: ethernet2.fra05-pod1-spine1 to ethernet10.fra05-pod1-leaf2"
+   ip address 10.0.254.4/31
+   no switchport
+!
+interface Ethernet3
+  description "Leaf: ethernet3.fra05-pod1-spine1"
+!
+interface Ethernet4
+  description "Leaf: ethernet4.fra05-pod1-spine1"
+!
+interface Ethernet5
+  description "Leaf: ethernet5.fra05-pod1-spine1"
+!
+interface Ethernet6
+  description "Leaf: ethernet6.fra05-pod1-spine1"
+!
+interface Ethernet7
+  description "Leaf: ethernet7.fra05-pod1-spine1"
+!
+interface Ethernet8
+  description "Leaf: ethernet8.fra05-pod1-spine1"
+!
+interface Ethernet9
+  description "Leaf: ethernet9.fra05-pod1-spine1"
+!
+interface Management1
+  description "Mgmt: management1.fra05-pod1-spine1"
+   ip address 172.16.0.1/24
+   no switchport
+!
+interface loopback 0
+  description "Loopback: loopback0.fra05-pod1-spine1"
+   ip address 10.0.255.1/32
+   no switchport
+!
+interface loopback 1
+  description "Loopback: VTEP loopback1.fra05-pod1-spine1"
+   ip address 10.0.253.1/32
+   no switchport
+!
+!
+ip routing
+!
+ip route 0.0.0.0/0 172.16.0.254
+!
+router bgp 65300
+   router-id 10.0.253.1
+!

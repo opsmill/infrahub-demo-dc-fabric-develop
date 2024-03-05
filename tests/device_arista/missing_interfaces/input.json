@@ -1,0 +1,93 @@
+{
+    "data": {
+      "InfraDevice": {
+        "edges": [
+          {
+            "node": {
+              "id": "17b9d72a-750f-aa08-3f2e-22a46fecbd68",
+              "name": {
+                "value": "fra05-pod1-spine1"
+              },
+              "asn": {
+                "node": {
+                  "asn": {
+                    "value": 65300
+                  }
+                }
+              },
+              "primary_address": {
+                "node": {
+                  "address": {
+                    "value": "172.16.0.1/24"
+                  }
+                }
+              },
+              "location": {
+                "node": {
+                  "id": "17b9d667-42d2-35b0-3f28-22a4b0b34117",
+                  "name": {
+                    "value": "Equinix FRA05"
+                  },
+                  "timezone": {
+                    "value": null
+                  },
+                  "ancestors": {
+                    "edges": [
+                      {
+                        "node": {
+                          "network_management_servers": {
+                            "edges": []
+                          }
+                        }
+                      },
+                      {
+                        "node": {
+                          "network_management_servers": {
+                            "edges": []
+                          }
+                        }
+                      },
+                      {
+                        "node": {
+                          "network_management_servers": {
+                            "edges": []
+                          }
+                        }
+                      },
+                      {
+                        "node": {
+                          "network_management_servers": {
+                            "edges": [
+                              {
+                                "node": {
+                                  "__typename": "NetworkNameServer",
+                                  "name": {
+                                    "value": "8.8.8.8"
+                                  }
+                                }
+                              },
+                              {
+                                "node": {
+                                  "__typename": "NetworkNTPServer",
+                                  "name": {
+                                    "value": "time1.google.com"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "interfaces": {
+                "edges": []
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
