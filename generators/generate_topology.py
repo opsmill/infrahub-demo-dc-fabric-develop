@@ -15,7 +15,7 @@ from utils import add_relationships, group_add_member, populate_local_store, ups
 
 INTERFACE_MGMT_NAME = {
     "QFX5110-48S-S": "fxp0",
-    "CCS-720DP-48S-2F": "Management1",
+    "CCS-720DP-48S-2F": "Management0",
     "NCS-5501-SE": "MgmtEth0/RP0/CPU0/0",
     "ASR1002-HX": "GigabitEthernet0",
     "linux": "Eth0"
@@ -23,16 +23,16 @@ INTERFACE_MGMT_NAME = {
 
 INTERFACE_LOOP_NAME = {
     "QFX5110-48S-S": "lo0",
-    "CCS-720DP-48S-2F": "loopback 0",
-    "NCS-5501-SE": "Loopback 0",
+    "CCS-720DP-48S-2F": "Loopback0",
+    "NCS-5501-SE": "Loopback0",
     "ASR1002-HX": "Loopback 0",
     "linux": "lo"
 }
 
 INTERFACE_VTEP_NAME = {
     "QFX5110-48S-S": "lo1",
-    "CCS-720DP-48S-2F": "loopback 1",
-    "NCS-5501-SE": "Loopback 1",
+    "CCS-720DP-48S-2F": "Loopback1",
+    "NCS-5501-SE": "Loopback1",
     "ASR1002-HX": "Loopback 1",
     "linux": "lo1"
 }

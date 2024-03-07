@@ -1376,6 +1376,11 @@ nodes:
         optional: true
         cardinality: many
         kind: Component
+      - name: network_services
+        peer: TopologyNetworkService
+        optional: true
+        cardinality: many
+        kind: Component
 
   # --------------------  Strategies  --------------------
   - name: MPLSStrategy
