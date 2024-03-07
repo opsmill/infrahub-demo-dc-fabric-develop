@@ -297,6 +297,7 @@ def generate_asn(location_index: int, element_type_index: int, element_index: in
 async def generate_topology(client: InfrahubClient, log: logging.Logger, branch: str, topology: InfrahubNode, topology_index: int) -> Optional[str]:
      async with client.start_tracking(params={"topology": topology.name.value}) as client:
         topology_name = topology.name.value
+        topology_id = topology.id
 
         if not topology.location.peer:
             log.info(f"{topology_name} is not associated with a Location.")
@@ -421,13 +422,14 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                     )
                     device_asn_id = asn_obj.id
                 data_device = {
-                    "name": {"value": device_name, "source": account_pop.id, "is_protected": True},
-                    "location": {"id": location_id, "source": account_pop.id, "is_protected": True},
-                    "status": {"value": ACTIVE_STATUS, "owner": account_ops.id},
-                    "device_type": {"id": device_type.id, "source": account_pop.id},
-                    "role": {"value": device_role_name, "source": account_pop.id, "is_protected": True, "owner": account_eng.id},
-                    "asn": {"id": device_asn_id, "source": account_pop.id, "is_protected": True, "owner": account_eng.id},
-                    "platform": {"id": platform_id, "source": account_pop.id, "is_protected": True}
+                    "name": { "value": device_name, "source": account_pop.id, "is_protected": True },
+                    "location": { "id": location_id, "source": account_pop.id, "is_protected": True },
+                    "status": { "value": ACTIVE_STATUS, "owner": account_ops.id },
+                    "device_type": { "id": device_type.id, "source": account_pop.id },
+                    "role": { "value": device_role_name, "source": account_pop.id, "is_protected": True, "owner": account_eng.id },
+                    "asn": { "id": device_asn_id, "source": account_pop.id, "is_protected": True, "owner": account_eng.id },
+                    "platform": { "id": platform_id, "source": account_pop.id, "is_protected": True },
+                    "topology": { "id": topology_id, "source": account_pop.id, "is_protected": True },
                 }
                 device_obj = await upsert_object(
                     client=client,
