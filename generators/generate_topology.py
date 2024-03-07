@@ -258,7 +258,8 @@ def prepare_interface_data(
         speed: int = 1000,
         l2_mode: str = None,
         mtu: int = None,
-        untagged_vlan: InfrahubNode = None
+        untagged_vlan: Optional[InfrahubNode] = None,
+        tagged_vlans: Optional[List[InfrahubNode]] = None,
         ) -> Dict[str, Any]:
     data = {
         "device": {"id": device_obj_id, "is_protected": True},
@@ -274,6 +275,8 @@ def prepare_interface_data(
         data["l2_mode"] = l2_mode
         if untagged_vlan:
             data["untagged_vlan"] = untagged_vlan
+        if tagged_vlans:
+            data["tagged_vlan"] = tagged_vlans
     if mtu:
         data["mtu"] = mtu
     return data
@@ -328,8 +331,12 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
 
         locations_vlans = await client.filters(kind="InfraVLAN", location__shortname__value=location_shortname, branch=branch)
         populate_local_store(objects=locations_vlans, key_type="name", store=store)
-        vlan_server = store.get(key=f"{location_shortname.lower()}_server", kind="InfraVLAN")
-
+        vlan_pxe = store.get(key=f"{location_shortname.lower()}_server-pxe", kind="InfraVLAN")
+        vlans = await client.filters(kind="InfraVLAN", location__shortname__value=location_shortname, branch=branch)
+        vlans_server = []
+        for vlan in vlans:
+            if vlan.role.value == "server" and vlan.name != f"{location_shortname.lower}_server-pxe":
+                vlans_server.append(vlan)
         # Using Prefix role to knwow which network to use. Role to Prefix should help avoid doing this
         locations_subnets = await client.filters(kind="InfraPrefix", location__shortname__value=location_shortname, branch=branch)
         location_external_net = []
@@ -458,7 +465,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
 
                 # Loopback Interface
                 loopback_name = INTERFACE_LOOP_NAME[device_type_name]
-                loopback_description = f"Loopback: {loopback_name.lower().replace(' ', '')}.{device_name.lower()}"
+                loopback_description = f"{loopback_name.lower().replace(' ', '')}.{device_name.lower()}"
                 loopback_data = prepare_interface_data(
                     device_obj_id=device_obj.id,
                     intf_name=loopback_name,
@@ -495,7 +502,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
 
                 # Loopback VTEP Interface
                 loopback_vtep_name = INTERFACE_VTEP_NAME[device_type_name]
-                loopback_vtep_description = f"Loopback: VTEP {loopback_vtep_name.lower().replace(' ', '')}.{device_name.lower()}"
+                loopback_vtep_description = f"{loopback_vtep_name.lower().replace(' ', '')}.{device_name.lower()}"
                 loopback_vtep_data = prepare_interface_data(
                     device_obj_id=device_obj.id,
                     intf_name=loopback_vtep_name,
@@ -532,7 +539,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
 
                 # Management Interface
                 mgmt_name = INTERFACE_MGMT_NAME[device_type_name]
-                mgmt_description = f"Mgmt: {mgmt_name.lower().replace(' ', '')}.{device_name.lower()}"
+                mgmt_description = f"{mgmt_name.lower().replace(' ', '')}.{device_name.lower()}"
                 mgmt_data = prepare_interface_data(
                     device_obj_id=device_obj.id,
                     intf_name=mgmt_name,
@@ -577,7 +584,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
 
                 for intf_idx, intf_name in enumerate(DEVICES_INTERFACES[device_type_name]):
                     intf_role = INTERFACE_ROLES_MAPPING[device_role_name.lower()][intf_idx]
-                    interface_description = f"{intf_role.title()}: {intf_name.lower().replace(' ', '')}.{device_name.lower()}"
+                    interface_description = f"{intf_name.lower().replace(' ', '')}.{device_name.lower()}"
 
                     # L3 Interfaces
                     if intf_role in L3_ROLE_MAPPING:
@@ -602,7 +609,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                             account_pop_id=account_pop.id,
                             account_ops_id=account_ops.id,
                             l2_mode="Access",
-                            untagged_vlan=vlan_server,
+                            untagged_vlan=vlan_pxe,
+                            tagged_vlans=vlans_server,
                             mtu=device_mtu,
                         )
                     interface_obj = await upsert_interface(
@@ -678,6 +686,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
         interconnection_subnets = IPv4Network(next(iter(location_technical_net_pool)).prefix.value).subnets(new_prefix=31)
 
         # Cabling Leaf
+        backbone_vrf_obj_id = store.get(key="Backbone", kind="InfraVRF").id
         for leaf_idx in range(1, leaf_quantity + 1):
             if leaf_idx > len(spine_leaf_interfaces):
                 log.error(f"The quantity of leaf requested ({leaf_quantity}) is superior to the number of interfaces flagged as 'leaf' ({len(spine_leaf_interfaces)})")
@@ -718,9 +727,9 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 intf_leaf_obj = await client.get(kind="InfraInterfaceL3", name__value=uplink_port, device__name__value=f"{topology_name}-leaf{leaf_idx}")
                 # store.get(kind="InfraInterfaceL3", key=f"{topology_name}-leaf{leaf_idx}-{uplink_port}")
 
-                new_spine_intf_description = intf_spine_obj.description.value + f" to {intf_leaf_obj.description.value.split(':', 1)[1].strip()}"
+                new_spine_intf_description = intf_spine_obj.description.value + f" to {intf_leaf_obj.description.value}"
                 spine_ico_ip_description = intf_spine_obj.description.value
-                new_leaf_intf_description = intf_leaf_obj.description.value + f" to {intf_spine_obj.description.value.split(':', 1)[1].strip()}"
+                new_leaf_intf_description = intf_leaf_obj.description.value + f" to {intf_spine_obj.description.value}"
                 leaf_ico_ip_description = intf_leaf_obj.description.value
 
                 interconnection_subnet = next(interconnection_subnets)
@@ -733,8 +742,9 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                     "description": {"value": prefix_description},
                     "organization": {"id": orga_duff.id },
                     "location": {"id": location_id },
-                    "status": {"value": "active"},
-                    "role": {"value": "technical"},
+                    "status": {"value": "active" },
+                    "role": {"value": "technical" },
+                    "vrf": { "id": backbone_vrf_obj_id }
                 }
                 prefix_obj = await upsert_object(
                     client=client,
@@ -916,9 +926,9 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                     intf_leaf_obj = await client.get(kind="InfraInterfaceL3", name__value=leaf_port, device__name__value=f"{topology_name}-borderleaf{leaf_idx}")
                     # store.get(kind="InfraInterfaceL3", key=f"{topology_name}-borderleaf{leaf_idx}-{leaf_port}")
 
-                    new_spine_intf_description = intf_spine_obj.description.value + f" to {intf_leaf_obj.description.value.split(':', 1)[1].strip()}"
+                    new_spine_intf_description = intf_spine_obj.description.value + f" to {intf_leaf_obj.description.value}"
                     spine_ico_ip_description = intf_spine_obj.description.value
-                    new_leaf_intf_description = intf_leaf_obj.description.value + f" to {intf_spine_obj.description.value.split(':', 1)[1].strip()}"
+                    new_leaf_intf_description = intf_leaf_obj.description.value + f" to {intf_spine_obj.description.value}"
                     leaf_ico_ip_description = intf_leaf_obj.description.value
 
                     interconnection_subnet = next(interconnection_subnets)
@@ -933,6 +943,7 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                         "location": {"id": location_id },
                         "status": {"value": "active"},
                         "role": {"value": "technical"},
+                        "vrf": { "id": backbone_vrf_obj_id }
                     }
                     prefix_obj = await upsert_object(
                         client=client,
@@ -1088,8 +1099,8 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
                 intf_leaf1_obj = store.get(kind="InfraInterfaceL3", key=f"{leaf1_name}-{leaf_peer_interface}")
                 intf_leaf2_obj = store.get(kind="InfraInterfaceL3", key=f"{leaf2_name}-{leaf_peer_interface}")
 
-                new_leaf1_intf_description = intf_leaf1_obj.description.value + f" to {intf_leaf2_obj.description.value.split(':', 1)[1].strip()}"
-                new_leaf2_intf_description = intf_leaf2_obj.description.value + f" to {intf_leaf1_obj.description.value.split(':', 1)[1].strip()}"
+                new_leaf1_intf_description = intf_leaf1_obj.description.value + f" to {intf_leaf2_obj.description.value}"
+                new_leaf2_intf_description = intf_leaf2_obj.description.value + f" to {intf_leaf1_obj.description.value}"
 
                 # Update Leaf1 interface (description, endpoints, status)
                 intf_leaf1_obj.description.value = new_leaf1_intf_description
@@ -1163,6 +1174,9 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs
         # Prefixes
         prefixes=await client.all("InfraPrefix")
         populate_local_store(objects=prefixes, key_type="prefix", store=store)
+        # VRF
+        vrfs=await client.all("InfraVRF")
+        populate_local_store(objects=vrfs, key_type="name", store=store)
 
     except Exception as e:
         log.error(f"Fail to populate due to {e}")
@@ -1202,8 +1216,8 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs
                 client=client,
                 branch=branch,
                 log=log,
+                topology_index=index,
                 node=topology,
-                topology_index=index
                 )
         except ValueError:
             # You should end-up here if topology.location.peer is not set

@@ -248,6 +248,8 @@ LOCATIONS = {
     }
 }
 
+
+
 MGMT_SERVERS = {
     # Name, Description, Type
     ("8.8.8.8", "Google-8.8.8.8", "Name"),
@@ -285,10 +287,10 @@ NETWORKS_POOL_EXTERNAL = [subnet for network in EXTERNAL_NETWORKS for subnet in 
 NETWORKS_POOL_ITER = iter(NETWORKS_POOL_EXTERNAL)
 LOCATION_EXTERNAL_NETS = {location["shortname"]: next(NETWORKS_POOL_ITER) for location in site_locations}
 
-VLANS = (
-    ("200", "server"),
-    ("400", "management"),
-)
+VLANS = {
+    ("100", "server-pxe"),
+    ("4000", "management-ooba"),
+}
 
 # Mapping Dropdown Role and Status here
 ACTIVE_STATUS = "active"
@@ -575,13 +577,13 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
         batch = await client.create_batch()
         location_id = location_obj.id
         for vlan in VLANS:
-            role = vlan[1]
+            role = vlan[1].split("-")[0]
             vlan_name = f"{location_shortname.lower()}_{vlan[1]}"
 
             data={
                 "name": {"value": vlan_name, "is_protected": True, "source": account_pop.id},
                 "vlan_id": {"value": int(vlan[0]), "is_protected": True, "owner": account_eng.id, "source": account_pop.id},
-                "description": {"value": f"{location_name.upper()} {vlan[1].title()} VLAN" },
+                "description": {"value": f"{location_name.upper()} - {vlan[1].lower()} VLAN" },
                 "status": {"value": ACTIVE_STATUS, "owner": account_ops.id},
                 "role": {"value": role, "source": account_pop.id, "is_protected": True, "owner": account_eng.id},
                 "location": {"id": location_id},
@@ -600,11 +602,10 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
             accessor = f"{node._schema.default_filter.split('__')[0]}"
             log.info(f"- Created {node._schema.kind} - {getattr(node, accessor).value}")
 
-        mgmt_vlan = store.get(key=f"{location_shortname.lower()}_management", kind="InfraVLAN")
-
         # --------------------------------------------------
         # Create Prefix
         # --------------------------------------------------
+        # TODO Add a relation between the supernets and the smaller prefixes
         batch = await client.create_batch()
         # Create Supernet
         supernet_description = f"{location_shortname.lower()}-supernet-{IPv4Network(location_supernet).network_address}"
@@ -613,34 +614,35 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
             "description": {"value": supernet_description},
             "organization": {"id": orga_duff_obj.id },
             "location": {"id": location_id },
-            "status": {"value": "active"},
-            "role": {"value": "supernet"},
+            "status": {"value": "active" },
+            "role": {"value": "supernet" },
         }
-        prefix_obj = await upsert_object(
+        supernet_obj = await upsert_object(
             client=client,
             log=log,
             branch=branch,
             object_name=location_supernet,
             kind_name="InfraPrefix",
             data=data,
-            store=store,
-            batch=batch
+            store=store
         )
         # Create /24 specifics subnets Pool
         for prefix in location_prefixes:
-            vlan_id = None
+            # vlan_id = None
             if any(prefix.subnet_of(external_net) for external_net in EXTERNAL_NETWORKS):
                 prefix_status = "active"
                 prefix_description = f"{location_shortname.lower()}-ext-{IPv4Network(prefix).network_address}"
                 prefix_role = "public"
+                vrf_id = store.get(key="Internet", kind="InfraVRF").id
             elif prefix.subnet_of(location_mgmt_pool):
                 prefix_status = "active"
                 prefix_description = f"{location_shortname.lower()}-mgmt-{IPv4Network(prefix).network_address}"
                 prefix_role = "management"
-                vlan_id = mgmt_vlan.id
+                vrf_id = store.get(key="Management", kind="InfraVRF").id
             else:
                 prefix_status = "reserved"
                 prefix_role = "technical"
+                vrf_id = store.get(key="Backbone", kind="InfraVRF").id
                 if  prefix.subnet_of(location_p2p_pool):
                     prefix_description = f"{location_shortname.lower()}-p2p-{IPv4Network(prefix).network_address}"
                 elif  prefix.subnet_of(location_vtep_pool):
@@ -654,10 +656,11 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
                 "description": {"value": prefix_description},
                 "organization": {"id": orga_duff_obj.id },
                 "location": {"id": location_id },
-                "status": {"value": prefix_status},
-                "role": {"value": prefix_role},
-                "vlan": {"id": vlan_id},
+                "status": {"value": prefix_status },
+                "role": {"value": prefix_role },
+                "vrf": { "id": vrf_id },
             }
+
             prefix_obj = await upsert_object(
                 client=client,
                 log=log,
@@ -695,6 +698,8 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs
         populate_local_store(objects=autonomous_systems, key_type="name", store=store)
         groups=await client.all("CoreStandardGroup")
         populate_local_store(objects=groups, key_type="name", store=store)
+        vrfs=await client.all("InfraVRF")
+        populate_local_store(objects=vrfs, key_type="name", store=store)
 
     except Exception as e:
         log.info(f"Fail to populate due to {e}")

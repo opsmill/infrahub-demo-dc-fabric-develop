@@ -70,6 +70,28 @@ ASNS = (
     (7018,  "AT&T Services")
 )
 
+VRF = {
+    # Name, Description, RD, RT-import, RT-export
+    ("Internet", "Internet VRF", "65000:100", "65000:100", "65000:100"),
+    ("Backbone", "Backbone VRF", "65000:101", "65000:101", "65000:101"),
+    ("Management", "OOBA Management VRF", "65000:199", "65000:199", "65000:199"),
+    ("Production", "Production VRF", "200", "200", "200"),
+    ("Staging", "Staging VRF", "201", "201", "201"),
+    ("Development", "Development VRF", "202", "202", "202"),
+    ("DMZ", "DMZ VRF", "666", "666", "666"),
+}
+
+ROUTE_TARGETS = {
+    # Name, Description
+    ("65000:100", "Internet VRF Route Target"),
+    ("65000:101", "Backbone VRF Route Target"),
+    ("65000:199", "OOBA Management VRF Route Target"),
+    ("200", "Production Environment VRF Route Target"),
+    ("201", "Staging Environment VRF Route Target"),
+    ("202", "Development Environment VRF Route Target"),
+    ("666", "DMZ VRF Route Target"),
+}
+
 PLATFORMS = (
     # name, nornir_platform, napalm_driver, netmiko_device_type, ansible_network_os
     ("Cisco IOS-XE", "ios", "ios", "cisco_ios", "ios"),
@@ -354,7 +376,61 @@ async def create_bascis(
             store=store,
             batch=batch,
             )
+    async for node, _ in batch.execute():
+        accessor = f"{node._schema.default_filter.split('__')[0]}"
+        log.info(f"- Created {node._schema.kind} - {getattr(node, accessor).value}")
 
+    batch = await client.create_batch()
+    log.info(f"Creating Route Targets")
+    for route_target in ROUTE_TARGETS:
+        rt_name = route_target[0]
+        rt_description = route_target[1]
+        data = {
+            "name": { "value": rt_name, "source": account.id},
+            "description": { "value": rt_description, "source": account.id},
+        }
+        await upsert_object(
+            client=client,
+            log=log,
+            branch=branch,
+            object_name=rt_name,
+            kind_name="InfraRouteTarget",
+            data=data,
+            store=store,
+            batch=batch,
+            )
+
+    async for node, _ in batch.execute():
+        accessor = f"{node._schema.default_filter.split('__')[0]}"
+        log.info(f"- Created {node._schema.kind} - {getattr(node, accessor).value}")
+
+    log.info(f"Creating VRF")
+    batch = await client.create_batch()
+    for vrf in VRF:
+        vrf_name = vrf[0]
+        vrf_description = vrf[1]
+        vrf_rd = vrf[2]
+
+        vrf_rt_import_obj = store.get(key=vrf[3], kind="InfraRouteTarget")
+        vrf_rt_export_obj = store.get(key=vrf[4], kind="InfraRouteTarget")
+
+        data = {
+            "name": { "value": vrf_name, "source": account.id},
+            "description": { "value": vrf_description, "source": account.id},
+            "vrf_rd": { "value": vrf_rd, "source": account.id},
+            "import_rt": { "id": vrf_rt_import_obj.id, "source": account.id},
+            "export_rt": { "id": vrf_rt_export_obj.id, "source": account.id},
+        }
+        await upsert_object(
+            client=client,
+            log=log,
+            branch=branch,
+            object_name=vrf_name,
+            kind_name="InfraVRF",
+            data=data,
+            store=store,
+            batch=batch,
+            )
     async for node, _ in batch.execute():
         accessor = f"{node._schema.default_filter.split('__')[0]}"
         log.info(f"- Created {node._schema.kind} - {getattr(node, accessor).value}")
