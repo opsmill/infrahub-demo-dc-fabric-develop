@@ -46,7 +46,7 @@ no aaa root
 !
 {%   if ns.ntp_servers %}
 {%      for ntp_server in ns.ntp_servers %}
-ntp server  {{ ntp_server }}
+ntp server {{ ntp_server }}
 {%      endfor %}
 {%   endif %}
 !
@@ -57,9 +57,9 @@ ip name-server {{ name_server }}
 {%   endif %}
 ! Vlan Configuration
 {%   for network_services in data.InfraDevice.edges[0].node.topology.node.network_services.edges %}
-{%      if network_services.vlan %}
-vlan {{ network_services.vlan.vlan_id.value }}
-   name {{ network_services.vlan.name.value }}
+{%      if network_services.node.vlan %}
+vlan {{ network_services.node.vlan.node.vlan_id.value }}
+   name {{ network_services.node.vlan.node.name.value }}
 {%      endif %}
 {%   endfor %}
 !
@@ -112,7 +112,6 @@ interface {{ intf.node.name.value }}
 {%      endif %}
 !
 {%   endfor %}
-!
 ip routing
 {%   for vrf in data.InfraVRF.edges %}
 ip routing vrf {{ vrf.node.name.value }}
@@ -130,7 +129,7 @@ router bgp {{ data.InfraDevice.edges[0].node.asn.node.asn.value }}
    no bgp default ipv4-unicast
 !
 {%   for vrf in data.InfraVRF.edges %}
-   vrf  {{ vrf.node.name.value }}
+   vrf ({{ vrf.node.name.value }}
    rd {{ ns.loopback_ip }}:{{ vrf.node.vrf_rd.value }}
    route-target import evpn {{ vrf.node.import_rt.node.name.value }}
    route-target export evpn {{ vrf.node.export_rt.node.name.value }}
@@ -139,6 +138,14 @@ router bgp {{ data.InfraDevice.edges[0].node.asn.node.asn.value }}
 !
 {%   endfor %}
 {%   endif %}
+management api http-commands
+   protocol https
+   no shutdown
+   !
+   vrf default
+      no shutdown
+!
+end
 {% else %}
 {# Warning: No Device found with this name #}
 {% endif %}
