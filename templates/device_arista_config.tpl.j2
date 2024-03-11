@@ -113,7 +113,7 @@ interface {{ intf.node.name.value }}
 !
 {%   endfor %}
 interface Vxlan1
-   description VTEP
+   description "VTEP on {{ InfraDevice.edges[0].node.name.value }}"
    vxlan source-interface Loopback1
    vxlan virtual-router encapsulation mac-address mlag-system-id
    vxlan udp-port 4789
