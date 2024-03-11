@@ -1130,6 +1130,11 @@ async def generate_topology(client: InfrahubClient, log: logging.Logger, branch:
             # create BGP peer group "per" device ?
             pass
 
+        #   -------------------- Forcing the Generation of the Artifact --------------------
+        artifact_definitions = await client.filters(kind="CoreArtifactDefinition")
+        for artifact_definition in artifact_definitions:
+            await artifact_definition.generate()
+
         return location_shortname
 
 # ---------------------------------------------------------------

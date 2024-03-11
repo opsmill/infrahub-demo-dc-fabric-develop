@@ -55,6 +55,11 @@ query device_info($device: String!) {
                       prefix {
                         value
                       }
+                      vrf {
+                        node {
+                          vrf_rd {value}
+                        }
+                      }
                     }
                   }
                 }

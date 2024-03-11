@@ -112,6 +112,37 @@ interface {{ intf.node.name.value }}
 {%      endif %}
 !
 {%   endfor %}
+interface Vlan4093
+   description MLAG_PEER_L3_PEERING
+   no shutdown
+   mtu 1550
+   ip address 192.168.91.40/31
+!
+interface Vlan4094
+   description MLAG_PEER
+   no shutdown
+   mtu 1550
+   no autostate
+   ip address 192.168.90.40/31
+!
+interface Vxlan1
+   description leaf1-dc1_VTEP
+   vxlan source-interface Loopback1
+   vxlan virtual-router encapsulation mac-address mlag-system-id
+   vxlan udp-port 4789
+{%   for network_services in data.InfraDevice.edges[0].node.topology.node.network_services.edges %}
+{%      if network_services.node.vlan %}
+{%         if network_services.node.service_type.value == "Layer2" %}
+   vxlan vlan {{ network_services.node.vlan.node.vlan_id.value }} vni 201{{ network_services.node.vlan.node.vlan_id.value }}
+{%         elif network_services.node.service_type.value == "Layer3" %}
+   vxlan vlan {{ network_services.node.vlan.node.vlan_id.value }} vni {{ network_services.node.prefix.node.vrf.node.vrf_rd.value }}{{ network_services.node.vlan.node.vlan_id.value }}
+{%         endif %}
+{%      endif %}
+{%   endfor %}
+{%   for vrf in data.InfraVRF.edges %}
+   vxlan vrf {{ vrf.node.name.value }} vni {{ vrf.node.vrf_rd.value }}
+{%   endfor %}
+!
 ip routing
 {%   for vrf in data.InfraVRF.edges %}
 ip routing vrf {{ vrf.node.name.value }}
@@ -129,7 +160,7 @@ router bgp {{ data.InfraDevice.edges[0].node.asn.node.asn.value }}
    no bgp default ipv4-unicast
 !
 {%   for vrf in data.InfraVRF.edges %}
-   vrf ({{ vrf.node.name.value }}
+   vrf {{ vrf.node.name.value }}
    rd {{ ns.loopback_ip }}:{{ vrf.node.vrf_rd.value }}
    route-target import evpn {{ vrf.node.import_rt.node.name.value }}
    route-target export evpn {{ vrf.node.export_rt.node.name.value }}

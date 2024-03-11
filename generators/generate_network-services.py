@@ -220,6 +220,11 @@ async def generate_network_services(
                 data=service_data,
                 store=store,
                 )
+    #   -------------------- Forcing the Generation of the Artifact --------------------
+    artifact_definitions = await client.filters(kind="CoreArtifactDefinition")
+    for artifact_definition in artifact_definitions:
+        await artifact_definition.generate()
+
     if service_obj:
         # Add the new vlan for all the L2 interface of the topology
         return service_obj.id
