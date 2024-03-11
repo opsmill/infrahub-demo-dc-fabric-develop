@@ -4,21 +4,21 @@
       "edges": [
         {
           "node": {
-            "id": "17ba876b-8724-15c0-3f28-22a42dc94599",
+            "id": "17bbbbe6-fe22-c558-3f2a-22a4773c77b3",
             "name": {
               "value": "fra05-pod1-leaf1"
             },
             "asn": {
               "node": {
                 "asn": {
-                  "value": 65321
+                  "value": 65311
                 }
               }
             },
             "primary_address": {
               "node": {
                 "address": {
-                  "value": "172.16.0.5/24"
+                  "value": "172.16.0.3/24"
                 }
               }
             },
@@ -54,6 +54,46 @@
                           "node": null
                         }
                       }
+                    },
+                    {
+                      "node": {
+                        "name": {
+                          "value": "l3_server_3702"
+                        },
+                        "service_type": {
+                          "value": "Layer3"
+                        },
+                        "vlan": {
+                          "node": {
+                            "name": {
+                              "value": "fra05_1702"
+                            },
+                            "role": {
+                              "value": "server"
+                            },
+                            "vlan_id": {
+                              "value": 1702
+                            }
+                          }
+                        },
+                        "prefix": {
+                          "node": {
+                            "role": {
+                              "value": "server"
+                            },
+                            "prefix": {
+                              "value": "10.0.1.0/24"
+                            },
+                            "vrf": {
+                              "node": {
+                                "vrf_rd": {
+                                  "value": "201"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
                     }
                   ]
                 }
@@ -61,7 +101,7 @@
             },
             "location": {
               "node": {
-                "id": "17ba8713-c71d-4488-3f2c-22a44ce8f156",
+                "id": "17bbbbd7-49f3-36d0-3f2f-22a404f2b0bf",
                 "name": {
                   "value": "Equinix FRA05"
                 },
@@ -99,7 +139,7 @@
                               "node": {
                                 "__typename": "NetworkNameServer",
                                 "name": {
-                                  "value": "1.1.1.1"
+                                  "value": "8.8.4.4"
                                 }
                               }
                             },
@@ -107,7 +147,7 @@
                               "node": {
                                 "__typename": "NetworkNTPServer",
                                 "name": {
-                                  "value": "time.cloudflare.com"
+                                  "value": "time1.google.com"
                                 }
                               }
                             }
@@ -124,7 +164,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL2",
-                    "id": "17ba876c-0b61-5758-3f28-22a41a5aeb91",
+                    "id": "17bbbbe7-5228-46f0-3f2b-22a4a6df1b63",
                     "name": {
                       "value": "Ethernet1"
                     },
@@ -169,7 +209,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL3",
-                    "id": "17ba876c-0b87-84c8-3f27-22a4e36ef47e",
+                    "id": "17bbbbe7-5246-4a88-3f20-22a45b1f5a55",
                     "name": {
                       "value": "Ethernet10"
                     },
@@ -209,7 +249,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL3",
-                    "id": "17ba876c-0b90-9518-3f29-22a49bd69593",
+                    "id": "17bbbbe7-5247-2d18-3f2b-22a414b39885",
                     "name": {
                       "value": "Ethernet11"
                     },
@@ -249,7 +289,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL3",
-                    "id": "17ba876c-0b93-a640-3f27-22a4557e36c3",
+                    "id": "17bbbbe7-5247-e898-3f21-22a478bf6328",
                     "name": {
                       "value": "Ethernet12"
                     },
@@ -273,7 +313,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL3",
-                    "id": "17ba876c-0b95-ffd0-3f25-22a40d83b333",
+                    "id": "17bbbbe7-5248-9478-3f25-22a4dce15f22",
                     "name": {
                       "value": "Ethernet13"
                     },
@@ -297,7 +337,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL3",
-                    "id": "17ba876c-0b9f-2f60-3f2f-22a40e25308e",
+                    "id": "17bbbbe7-5249-6380-3f23-22a497234f80",
                     "name": {
                       "value": "Ethernet14"
                     },
@@ -321,7 +361,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL2",
-                    "id": "17ba876c-0b68-73a8-3f2b-22a4b60f87eb",
+                    "id": "17bbbbe7-522a-0828-3f29-22a482aecc71",
                     "name": {
                       "value": "Ethernet2"
                     },
@@ -366,7 +406,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL2",
-                    "id": "17ba876c-0b6c-3880-3f25-22a43b239df4",
+                    "id": "17bbbbe7-522a-fa58-3f2d-22a41da95b1e",
                     "name": {
                       "value": "Ethernet3"
                     },
@@ -411,7 +451,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL2",
-                    "id": "17ba876c-0b6f-d648-3f21-22a4879cc3c9",
+                    "id": "17bbbbe7-522b-d900-3f2a-22a4646e3098",
                     "name": {
                       "value": "Ethernet4"
                     },
@@ -456,7 +496,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL2",
-                    "id": "17ba876c-0b75-c1e8-3f26-22a405d1a645",
+                    "id": "17bbbbe7-522c-afd8-3f2d-22a4abdc825a",
                     "name": {
                       "value": "Ethernet5"
                     },
@@ -501,7 +541,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL2",
-                    "id": "17ba876c-0b79-4840-3f20-22a4b5942f0a",
+                    "id": "17bbbbe7-522d-86b0-3f21-22a472dc414e",
                     "name": {
                       "value": "Ethernet6"
                     },
@@ -546,7 +586,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL3",
-                    "id": "17ba876c-0b7c-bef8-3f2e-22a484d62e26",
+                    "id": "17bbbbe7-522e-5d88-3f2d-22a4c5fd5da3",
                     "name": {
                       "value": "Ethernet7"
                     },
@@ -570,7 +610,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL2",
-                    "id": "17ba876c-0b7f-f730-3f2c-22a4bcf99095",
+                    "id": "17bbbbe7-522f-24c0-3f2f-22a45c8a54c3",
                     "name": {
                       "value": "Ethernet8"
                     },
@@ -615,7 +655,7 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL2",
-                    "id": "17ba876c-0b83-fa88-3f22-22a4c37b3315",
+                    "id": "17bbbbe7-5244-2f78-3f21-22a4fb44de29",
                     "name": {
                       "value": "Ethernet9"
                     },
@@ -660,49 +700,9 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL3",
-                    "id": "17ba876b-d57c-1d80-3f21-22a44fd04bc7",
+                    "id": "17bbbbe7-1a36-ca28-3f2f-22a43cf54599",
                     "name": {
-                      "value": "Management1"
-                    },
-                    "description": {
-                      "value": "management1.fra05-pod1-leaf1"
-                    },
-                    "enabled": {
-                      "value": true
-                    },
-                    "role": {
-                      "value": "management"
-                    },
-                    "mtu": {
-                      "value": 1500
-                    },
-                    "ip_addresses": {
-                      "edges": [
-                        {
-                          "node": {
-                            "prefix": {
-                              "node": {
-                                "prefix": {
-                                  "broadcast_address": "172.16.0.255"
-                                }
-                              }
-                            },
-                            "address": {
-                              "value": "172.16.0.5/24",
-                              "ip": "172.16.0.5"
-                            }
-                          }
-                        }
-                      ]
-                    }
-                  }
-                },
-                {
-                  "node": {
-                    "__typename": "InfraInterfaceL3",
-                    "id": "17ba876b-b668-3e60-3f24-22a491cd913e",
-                    "name": {
-                      "value": "loopback 0"
+                      "value": "Loopback0"
                     },
                     "description": {
                       "value": "loopback0.fra05-pod1-leaf1"
@@ -728,8 +728,8 @@
                               }
                             },
                             "address": {
-                              "value": "10.0.255.5/32",
-                              "ip": "10.0.255.5"
+                              "value": "10.0.255.3/32",
+                              "ip": "10.0.255.3"
                             }
                           }
                         }
@@ -740,9 +740,9 @@
                 {
                   "node": {
                     "__typename": "InfraInterfaceL3",
-                    "id": "17ba876b-c619-7c70-3f2e-22a46e4de59e",
+                    "id": "17bbbbe7-25b6-5120-3f22-22a4444f7e56",
                     "name": {
-                      "value": "loopback 1"
+                      "value": "Loopback1"
                     },
                     "description": {
                       "value": "loopback1.fra05-pod1-leaf1"
@@ -768,8 +768,48 @@
                               }
                             },
                             "address": {
-                              "value": "10.0.253.5/32",
-                              "ip": "10.0.253.5"
+                              "value": "10.0.253.3/32",
+                              "ip": "10.0.253.3"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "node": {
+                    "__typename": "InfraInterfaceL3",
+                    "id": "17bbbbe7-30bd-96f0-3f26-22a4898f5a3c",
+                    "name": {
+                      "value": "Management0"
+                    },
+                    "description": {
+                      "value": "management0.fra05-pod1-leaf1"
+                    },
+                    "enabled": {
+                      "value": true
+                    },
+                    "role": {
+                      "value": "management"
+                    },
+                    "mtu": {
+                      "value": 1500
+                    },
+                    "ip_addresses": {
+                      "edges": [
+                        {
+                          "node": {
+                            "prefix": {
+                              "node": {
+                                "prefix": {
+                                  "broadcast_address": "172.16.0.255"
+                                }
+                              }
+                            },
+                            "address": {
+                              "value": "172.16.0.3/24",
+                              "ip": "172.16.0.3"
                             }
                           }
                         }
@@ -787,7 +827,7 @@
       "edges": [
         {
           "node": {
-            "id": "17ba8710-5005-9088-3f24-22a4d2fb9365",
+            "id": "17bbbbd4-0457-0d70-3f2f-22a4596e6349",
             "name": {
               "value": "Backbone"
             },
@@ -812,7 +852,7 @@
         },
         {
           "node": {
-            "id": "17ba8710-5003-f278-3f25-22a4cdc466d3",
+            "id": "17bbbbd4-0458-f5b8-3f21-22a42fa466a6",
             "name": {
               "value": "DMZ"
             },
@@ -837,7 +877,7 @@
         },
         {
           "node": {
-            "id": "17ba8710-5008-24b0-3f2b-22a4a0a6c4f9",
+            "id": "17bbbbd4-0458-6148-3f22-22a4d6ec6e4a",
             "name": {
               "value": "Development"
             },
@@ -862,7 +902,7 @@
         },
         {
           "node": {
-            "id": "17ba8710-5006-ec30-3f2e-22a445db6cf1",
+            "id": "17bbbbd4-0457-bd38-3f20-22a497eea327",
             "name": {
               "value": "Internet"
             },
@@ -887,7 +927,7 @@
         },
         {
           "node": {
-            "id": "17ba8710-5007-8c58-3f22-22a4a49b1137",
+            "id": "17bbbbd4-0459-8e10-3f27-22a436320a10",
             "name": {
               "value": "Management"
             },
@@ -912,7 +952,7 @@
         },
         {
           "node": {
-            "id": "17ba8710-5008-b920-3f25-22a494dae6d5",
+            "id": "17bbbbd4-045a-2a50-3f26-22a4857e8e6d",
             "name": {
               "value": "Production"
             },
@@ -937,7 +977,7 @@
         },
         {
           "node": {
-            "id": "17ba8710-5006-4c08-3f2e-22a4304040a7",
+            "id": "17bbbbd4-0455-c168-3f2f-22a4dd8ad338",
             "name": {
               "value": "Staging"
             },
