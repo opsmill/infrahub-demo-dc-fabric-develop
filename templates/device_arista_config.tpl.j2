@@ -112,21 +112,8 @@ interface {{ intf.node.name.value }}
 {%      endif %}
 !
 {%   endfor %}
-interface Vlan4093
-   description MLAG_PEER_L3_PEERING
-   no shutdown
-   mtu 1550
-   ip address 192.168.91.40/31
-!
-interface Vlan4094
-   description MLAG_PEER
-   no shutdown
-   mtu 1550
-   no autostate
-   ip address 192.168.90.40/31
-!
 interface Vxlan1
-   description leaf1-dc1_VTEP
+   description VTEP
    vxlan source-interface Loopback1
    vxlan virtual-router encapsulation mac-address mlag-system-id
    vxlan udp-port 4789
