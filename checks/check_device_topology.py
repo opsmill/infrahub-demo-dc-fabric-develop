@@ -34,11 +34,7 @@ class InfrahubCheckDeviceTopology(InfrahubCheck):
             # Processing expected roles and device types
             for element_edge in topology_node["elements"]["edges"]:
                 element_node = element_edge["node"]
-                is_border: bool =  element_node["border"]["value"]
-                if is_border:
-                    role = "border_" + element_node["device_role"]["value"]
-                else:
-                    role = element_node["device_role"]["value"]
+                role = element_node["device_role"]["value"]
                 device_type = element_node["device_type"]["node"]["name"]["value"]
                 quantity = element_node["quantity"]["value"]
 

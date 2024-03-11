@@ -31,7 +31,6 @@ TOPOLOGY_ELEMENTS = {
     "fra05-pod1": [
         ( 2, "spine", "CCS-720DP-48S-2F", 1500, False, False),
         ( 2, "leaf", "CCS-720DP-48S-2F", 1500, True, False),
-        ( 2, "leaf", "CCS-720DP-48S-2F", 1500, True, True), # borderleaf
     ],
     # "ams9-pod1": [
     #     ( 4, "spine", "CCS-720DP-48S-2F", 9192, False, False),

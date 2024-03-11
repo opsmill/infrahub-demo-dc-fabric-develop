@@ -18,6 +18,8 @@ ACCOUNTS = (
     ("Operation Team", "User", "Password123", "read-only"),
     ("Engineering Team", "User", "Password123", "read-write"),
     ("Architecture Team", "User", "Password123", "read-only"),
+    ("netbox", "Script", "Password123", "read-write"),
+    ("nautobot", "Script", "Password123", "read-write"),
 )
 
 TAGS = ["blue", "green", "red"]
