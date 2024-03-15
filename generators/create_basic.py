@@ -8,7 +8,7 @@ from utils import upsert_object
 # pylint: skip-file
 
 ACCOUNTS = (
-    # name, pasword, type, role
+    # name, password, type, role
     ("pop-builder", "Script", "Password123", "read-write"),
     ("generator", "Script", "Password123", "read-write"),
     ("CRM Synchronization", "Script", "Password123", "read-write"),
@@ -43,7 +43,7 @@ ORGANIZATIONS = (
     ("Cogent Communications", "provider"),
     ("Comcast Cable Communication", "provider"),
     ("Telecom Italia Sparkle", "provider"),
-     ("AT&T Services", "provider"),
+    ("AT&T Services", "provider"),
     ("Duff", "tenant"),
     ("Juniper", "manufacturer"),
     ("Cisco", "manufacturer"),
@@ -120,7 +120,7 @@ GROUPS = (
     ("cisco_devices", "Cisco Devices"),
     ("arista_devices", "Arista Devices"),
     ("juniper_devices", "Juniper Devices"),
-    ("upstream_interfaces", "Upstream Interface"),
+    ("transit_interfaces", "Transit Interface"),
     ("core_interfaces", "Core Interface"),
 )
 
@@ -128,14 +128,14 @@ BGP_PEER_GROUPS = (
     # name, import policy, export policy, local AS, remote AS
     ("POP_INTERNAL", "IMPORT_INTRA_POP", "EXPORT_INTRA_POP", "Duff", "Duff"),
     ("POP_GLOBAL", "IMPORT_POP_GLOBAL", "EXPORT_POP_GLOBLA", "Duff", None),
-    ("UPSTREAM_DEFAULT", "IMPORT_UPSTREAM", "EXPORT_PUBLIC_PREFIX", "Duff", None),
-    ("UPSTREAM_ARELION", "IMPORT_UPSTREAM", "EXPORT_PUBLIC_PREFIX", "Duff", "Arelion"),
+    ("TRANSIT_DEFAULT", "IMPORT_TRANSIT", "EXPORT_PUBLIC_PREFIX", "Duff", None),
+    ("TRANSIT_ARELION", "IMPORT_TRANSIT", "EXPORT_PUBLIC_PREFIX", "Duff", "Arelion"),
     ("IX_DEFAULT", "IMPORT_IX", "EXPORT_PUBLIC_PREFIX", "Duff", None),
 )
 
 store = NodeStore()
 
-async def create_bascis(
+async def create_basics(
         client: InfrahubClient,
         log: logging.Logger,
         branch: str
@@ -445,4 +445,4 @@ async def create_bascis(
 #
 # ---------------------------------------------------------------
 async def run(client: InfrahubClient, log: logging.Logger, branch: str, **kwargs) -> None:
-    await create_bascis(client=client, log=log, branch=branch)
+    await create_basics(client=client, log=log, branch=branch)
