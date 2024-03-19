@@ -60,8 +60,8 @@ generics:
             label: Backbone
             description: "Provide main data routes."
             color: "#6a5acd"
-          - name: transit
-            label: transit
+          - name: upstream
+            label: upstream
             description: "Connect to Internet service provider."
             color: "#9090de"
           - name: peering
@@ -452,8 +452,8 @@ nodes:
             label: Backbone
             description: "Provide main data routes."
             color: "#6a5acd"
-          - name: transit
-            label: transit
+          - name: upstream
+            label: upstream
             description: "Connect to Internet service provider."
             color: "#9090de"
           - name: peering
@@ -661,8 +661,8 @@ nodes:
             label: Backbone
             description: "Provide main data routes."
             color: "#6a5acd"
-          - name: transit
-            label: transit
+          - name: upstream
+            label: upstream
             description: "Connect to Internet service provider."
             color: "#9090de"
           - name: peering

@@ -120,7 +120,7 @@ GROUPS = (
     ("cisco_devices", "Cisco Devices"),
     ("arista_devices", "Arista Devices"),
     ("juniper_devices", "Juniper Devices"),
-    ("transit_interfaces", "Transit Interface"),
+    ("upstream_interfaces", "Upstream Interface"),
     ("core_interfaces", "Core Interface"),
 )
 
@@ -128,8 +128,8 @@ BGP_PEER_GROUPS = (
     # name, import policy, export policy, local AS, remote AS
     ("POP_INTERNAL", "IMPORT_INTRA_POP", "EXPORT_INTRA_POP", "Duff", "Duff"),
     ("POP_GLOBAL", "IMPORT_POP_GLOBAL", "EXPORT_POP_GLOBLA", "Duff", None),
-    ("TRANSIT_DEFAULT", "IMPORT_TRANSIT", "EXPORT_PUBLIC_PREFIX", "Duff", None),
-    ("TRANSIT_ARELION", "IMPORT_TRANSIT", "EXPORT_PUBLIC_PREFIX", "Duff", "Arelion"),
+    ("UPSTREAM_DEFAULT", "IMPORT_UPSTREAM", "EXPORT_PUBLIC_PREFIX", "Duff", None),
+    ("UPSTREAM_ARELION", "IMPORT_UPSTREAM", "EXPORT_PUBLIC_PREFIX", "Duff", "Arelion"),
     ("IX_DEFAULT", "IMPORT_IX", "EXPORT_PUBLIC_PREFIX", "Duff", None),
 )
 

@@ -144,7 +144,7 @@ INTERFACE_ROLES_MAPPING = {
 
 L3_ROLE_MAPPING = [
     "backbone",
-    "transit",
+    "upstream",
     "peering",
     "uplink",
     "leaf",
