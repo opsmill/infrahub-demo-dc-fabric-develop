@@ -316,7 +316,7 @@ nodes:
         order_weight: 1800
     relationships:
       - name: devices
-        peer: InfraDevice
+        peer: InfraGenericDevice
         optional: true
         cardinality: many
         order_weight: 1350
@@ -572,7 +572,7 @@ nodes:
         cardinality: one
         kind: Attribute
       - name: devices
-        peer: InfraDevice
+        peer: InfraGenericDevice
         optional: true
         cardinality: many
         kind: Attribute
@@ -705,7 +705,7 @@ nodes:
         cardinality: one
         kind: Attribute
       - name: device
-        peer: InfraDevice
+        peer: InfraGenericDevice
         optional: true
         cardinality: one
       - name: peer_group

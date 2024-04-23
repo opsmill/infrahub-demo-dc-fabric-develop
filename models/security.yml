@@ -9,11 +9,11 @@ generics:
     relationships:
       - name: rules
         label: Policy
-        peer: SecurityRenderedPolicyRule
+        peer: SecurityRendPolicyRule
         kind: Component
         cardinality: many
         optional: true
-  - name: GenericAddressGroup
+  - name: GenericAddrGrp
     namespace: Security
     include_in_menu: false
     display_labels:
@@ -48,11 +48,10 @@ generics:
     relationships:
       - name: address_groups
         label: Address Groups
-        peer: SecurityGenericAddressGroup
+        peer: SecurityGenericAddrGrp
         cardinality: many
-        kind: Parent
         optional: true
-  - name: GenericServiceGroup
+  - name: GenericSvcGrp
     namespace: Security
     include_in_menu: false
     hierarchical: true
@@ -91,9 +90,8 @@ generics:
     relationships:
       - name: service_groups
         label: Service Groups
-        peer: SecurityGenericServiceGroup
+        peer: SecurityGenericSvcGrp
         cardinality: many
-        kind: Parent
         optional: true
 
 nodes:
@@ -249,7 +247,7 @@ nodes:
         optional: false
         # https://stackoverflow.com/questions/11809631/fully-qualified-domain-name-validation
         regex: "(?=^.{1,253}$)(^(((?!-)[a-zA-Z0-9-]{1,63}(?<!-))|((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\\.)+[a-zA-Z]{2,63})$)"
-  - name: AddressGroup
+  - name: AddrGrp
     namespace: Security
     menu_placement: SecurityPolicy
     include_in_menu: true
@@ -257,11 +255,11 @@ nodes:
     description: "Group of addresses"
     label: Address Group
     default_filter: name__value
-    parent: SecurityAddressGroup
+    parent: SecurityAddrGrp
     display_labels:
       - name__value
     inherit_from:
-      - SecurityGenericAddressGroup
+      - SecurityGenericAddrGrp
 
   - name: IPProtocol
     namespace: Security
@@ -334,7 +332,7 @@ nodes:
         cardinality: one
         kind: Attribute
 
-  - name: ServiceGroup
+  - name: SvcGrp
     namespace: Security
     menu_placement: SecurityPolicy
     include_in_menu: true
@@ -347,7 +345,7 @@ nodes:
     order_by:
       - name__value
     inherit_from:
-      - SecurityGenericServiceGroup
+      - SecurityGenericSvcGrp
   - name: Policy
     namespace: Security
     label: "Security Policy"
@@ -442,7 +440,7 @@ nodes:
         cardinality: many
         identifier: policy_rule__source_address
       - name: source_groups
-        peer: SecurityGenericAddressGroup
+        peer: SecurityGenericAddrGrp
         optional: true
         kind: Attribute
         cardinality: many
@@ -454,7 +452,7 @@ nodes:
         cardinality: many
         identifier: policy_rule__source_service
       - name: source_service_groups
-        peer: SecurityGenericServiceGroup
+        peer: SecurityGenericSvcGrp
         optional: true
         kind: Attribute
         cardinality: many
@@ -466,7 +464,7 @@ nodes:
         cardinality: many
         identifier: policy_rule__destination_address
       - name: destination_groups
-        peer: SecurityGenericAddressGroup
+        peer: SecurityGenericAddrGrp
         optional: true
         kind: Attribute
         cardinality: many
@@ -478,7 +476,7 @@ nodes:
         cardinality: many
         identifier: policy_rule__destination_service
       - name: destination_service_groups
-        peer: SecurityGenericServiceGroup
+        peer: SecurityGenericSvcGrp
         optional: true
         kind: Attribute
         cardinality: many
@@ -508,7 +506,7 @@ nodes:
         label: Security Policy
         cardinality: one
         kind: Attribute
-  - name: RenderedPolicyRule
+  - name: RendPolicyRule
     namespace: Security
     include_in_menu: false
     label: Policy rule
@@ -566,7 +564,7 @@ nodes:
         cardinality: many
         identifier: rendered_policy_rule__source_address
       - name: source_groups
-        peer: SecurityGenericAddressGroup
+        peer: SecurityGenericAddrGrp
         optional: true
         kind: Attribute
         cardinality: many
@@ -578,7 +576,7 @@ nodes:
         cardinality: many
         identifier: rendered_policy_rule__source_service
       - name: source_service_groups
-        peer: SecurityGenericServiceGroup
+        peer: SecurityGenericSvcGrp
         optional: true
         kind: Attribute
         cardinality: many
@@ -590,7 +588,7 @@ nodes:
         cardinality: many
         identifier: rendered_policy_rule__destination_address
       - name: destination_groups
-        peer: SecurityGenericAddressGroup
+        peer: SecurityGenericAddrGrp
         optional: true
         kind: Attribute
         cardinality: many
@@ -602,7 +600,7 @@ nodes:
         cardinality: many
         identifier: rendered_policy_rule__destination_service
       - name: destination_service_groups
-        peer: SecurityGenericServiceGroup
+        peer: SecurityGenericSvcGrp
         optional: true
         kind: Attribute
         cardinality: many

@@ -9,9 +9,9 @@ query firewall_config($device: String!) {
           rules {
             edges {
               node {
-		name {
-		  value
-		}
+                name {
+                  value
+                  }
                 action {
                   value
                 }
@@ -160,13 +160,13 @@ query firewall_config($device: String!) {
       }
     }
   }
-  SecurityGenericAddressGroup {
+  SecurityGenericAddrGrp {
     edges {
       node {
         name {
           value
         }
-        ... on SecurityAddressGroup {
+        ... on SecurityAddrGrp {
           addresses {
             edges {
               node {
@@ -199,7 +199,7 @@ query firewall_config($device: String!) {
       }
     }
   }
-  SecurityServiceGroup {
+  SecuritySvcGrp {
     edges {
       node {
         name {
