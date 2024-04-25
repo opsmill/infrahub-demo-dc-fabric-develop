@@ -24,7 +24,7 @@ generics:
       - name: status
         kind: Dropdown
         optional: false
-        default_value: maintenance
+        default_value: provisioning
         choices:
           - name: active
             label: Active
