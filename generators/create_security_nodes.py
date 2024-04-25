@@ -34,7 +34,7 @@ class ServiceRange:
     description: Optional[str] = ""
 
 @dataclass
-class SvcGrp:
+class ServiceGroup:
     name: str
     services: List[Union[Service, ServiceRange]]
     description: Optional[str] = ""
@@ -52,7 +52,7 @@ class SecurityIPAddress:
     description: Optional[str] = ""
 
 @dataclass
-class AddrGrp:
+class AddressGroup:
     name: str
     addresses: List[Union[SecurityPrefix, SecurityIPAddress]]
     description: Optional[str] = ""
@@ -109,8 +109,8 @@ HTTP_PROXY = Service(name="HTTP-PROXY", ip_protocol=TCP, port=8080)
 
 SERVICES = [DNS_UDP, DNS_TCP, HTTP, HTTPS, DTLS, SSH, TELNET, SMTP, HTTP_PROXY]
 
-DNS = SvcGrp(name="DNS", services=[DNS_UDP, DNS_TCP])
-HTTP_HTTPS = SvcGrp(name="HTTP-HTTPS", services=[HTTP, HTTPS])
+DNS = ServiceGroup(name="DNS", services=[DNS_UDP, DNS_TCP])
+HTTP_HTTPS = ServiceGroup(name="HTTP-HTTPS", services=[HTTP, HTTPS])
 
 SERVICE_GROUPS = [DNS, HTTP_HTTPS]
 
@@ -126,9 +126,9 @@ EUR_WEB_PROXY_1 = SecurityIPAddress(name="EUR_WEB_PROXY_1", address=ipaddress.IP
 EUR_WEB_PROXY_2 = SecurityIPAddress(name="EUR_WEB_PROXY_2", address=ipaddress.IPv4Interface("10.200.1.1/32")) 
 ADDRESSES = [ANY, SMTP_SERVER_1, SMTP_SERVER_2, EUR_WEB_PROXY_1, EUR_WEB_PROXY_2]
 
-BLOCK_INTERNET = AddrGrp(name="BLOCK_INTERNET", addresses=PREFIXES + [ANY])
-SMTP_SERVERS = AddrGrp(name="SMTP_SERVERS", addresses=[SMTP_SERVER_1, SMTP_SERVER_2])
-EUR_WEB_PROXIES = AddrGrp(name="EUR_WEB_PROXIES", addresses=[EUR_WEB_PROXY_1, EUR_WEB_PROXY_2])
+BLOCK_INTERNET = AddressGroup(name="BLOCK_INTERNET", addresses=PREFIXES + [ANY])
+SMTP_SERVERS = AddressGroup(name="SMTP_SERVERS", addresses=[SMTP_SERVER_1, SMTP_SERVER_2])
+EUR_WEB_PROXIES = AddressGroup(name="EUR_WEB_PROXIES", addresses=[EUR_WEB_PROXY_1, EUR_WEB_PROXY_2])
 ADDRESS_GROUPS = [BLOCK_INTERNET, SMTP_SERVERS, EUR_WEB_PROXIES]
 
 ZONE_OUTSIDE = SecurityZone(name="outside")
@@ -176,7 +176,7 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str) -> None:
 
     for service_group in SERVICE_GROUPS:
         services = [client.store.get(service.name) for service in service_group.services]
-        obj = await client.create(kind="SecuritySvcGrp", name=service_group.name, services=services)
+        obj = await client.create(kind="SecurityServiceGroup", name=service_group.name, services=services)
         await obj.save(allow_upsert=True)
         client.store.set(key=obj.name.value, node=obj)
 
@@ -192,7 +192,7 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str) -> None:
 
     for address_group in ADDRESS_GROUPS:
         addresses = [client.store.get(key=address.name) for address in address_group.addresses]
-        obj = await client.create(kind="SecurityAddrGrp", name=address_group.name, addresses=addresses)
+        obj = await client.create(kind="SecurityAddressGroup", name=address_group.name, addresses=addresses)
         await obj.save(allow_upsert=True)
         client.store.set(key=obj.name.value, node=obj)
 
