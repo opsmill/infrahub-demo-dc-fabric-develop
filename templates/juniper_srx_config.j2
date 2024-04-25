@@ -62,7 +62,7 @@ applications {
         destination-port {{ service.node.port.value }};
     }
 {% endfor %}
-{% for group in data.SecuritySvcGrp.edges %}
+{% for group in data.SecurityServiceGroup.edges %}
     application-set {{ group.node.name.value }} {
     {% for application in group.node.services.edges %}
         application {{ application.node.name.value }};
@@ -92,7 +92,7 @@ security {
         addresss {{ address.node.name.value }} dns-name {{ address.node.fqdn.value }};
         {% endif %}
         {% endfor %}
-        {% for group in data.SecurityGenericAddrGrp.edges %}
+        {% for group in data.SecurityGenericAddressGroup.edges %}
         address-set {{ group.node.name.value }}{
         {%   for address in group.node.addresses.edges %}
             address {{ address.node.name.value }};
