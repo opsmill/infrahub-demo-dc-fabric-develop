@@ -48,3 +48,10 @@ async def create_and_add_to_batch(
     log.debug(f"- Added to batch: {obj._schema.kind} - {object_name}")
     store.set(key=object_name, node=obj)
     return obj
+
+def populate_local_store(objects: List[InfrahubNode], key_type: str, store: NodeStore):
+
+    for obj in objects:
+        key = getattr(obj, key_type)
+        if key:
+            store.set(key=key.value, node=obj)
