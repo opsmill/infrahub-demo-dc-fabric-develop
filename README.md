@@ -158,7 +158,7 @@ Using your new branch `test` you will be able to see the Diff in the Proposed Ch
 
 ### 12. Deploy your environment to containerlabs
 
-The containerlab generator automatically generates a containerlab topology artifact for every topology. Every device has its' startup config as an artifact.
+The containerlab generator automatically generates a containerlab topology artifact for every topology. Every device has its startup config as an artifact.
 
 ```shell
 # Download all artifacts automatically to ./generated-configs/
