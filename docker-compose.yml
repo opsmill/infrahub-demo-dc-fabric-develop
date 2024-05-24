@@ -83,6 +83,7 @@ services:
       - "INFRAHUB_PRODUCTION=false"
       - "INFRAHUB_LOG_LEVEL=DEBUG"
       - "INFRAHUB_API_TOKEN=${INFRAHUB_API_TOKEN}"
+      - "INFRAHUB_SDK_API_TOKEN=${INFRAHUB_API_TOKEN}"
       - "INFRAHUB_TIMEOUT=20"
       - "INFRAHUB_DB_TYPE=neo4j"
     volumes:
