@@ -20,25 +20,15 @@ This repository is demoing the key Infrahub features for an example data center 
 
 ### Prerequisites
 
-- If you are not using devcontainer, you will need to export those variables before the `docker-compose` :
+Launch an Infrahub instance:
 
 ```shell
-export INFRAHUB_ADDRESS="http://localhost:8000"
-export INFRAHUB_API_TOKEN="06438eb2-8019-4776-878c-0941b1f1d1ec"
-export INFRAHUB_DOCKER_IMAGE="registry.opsmill.io/opsmill/infrahub:0.14.1","
-export DATABASE_DOCKER_IMAGE="neo4j:5.19-community"
-export INFRAHUB_SECURITY_SECRET_KEY="327f747f-efac-42be-9e73-999f08f86b92"
-export CACHE_DOCKER_IMAGE="redis:7.2"
-export MESSAGE_QUEUE_IMAGE="rabbitmq:3.12-management"
-export CEOS_DOCKER_IMAGE="9r2s1098.c1.gra9.container-registry.ovh.net/external/ceos-image:4.29.0.2F"
-export LINUX_HOST_DOCKER_IMAGE="9r2s1098.c1.gra9.container-registry.ovh.net/external/alpine-host:v3.1.1"
+curl https://infrahub.opsmill.io | docker compose -f - up -d
 ```
 
-- Have Infrahub running on your computer, you can run `docker-compose up -d` or use `.devcontainer/onCreateCommand.sh`
+## Setup Steps
 
-## Installation Steps
-
-### 1. Export Infrahub env variable needed for infrahubctl
+### 1. Export Infrahub env variables needed for infrahubctl
 
 ```shell
 export INFRAHUB_ADDRESS="http://localhost:8000"
@@ -88,7 +78,6 @@ mutation {
 ```
 
 ### 5. Generate a Topology (Device, Interfaces, Cabling, BGP Sessions, ...)
-
 
 > [!NOTE]
 > The example below creates the topology fra05-pod1
@@ -156,7 +145,7 @@ Using your new branch `test` you will be able to see the Diff in the Proposed Ch
 
 - The checks will run in the Proposed Changes -> check_device_topology will fail.
 
-### 12. Deploy your environment to containerlabs
+### 12. Deploy your environment to containerlab
 
 The containerlab generator automatically generates a containerlab topology artifact for every topology. Every device has its startup config as an artifact.
 
