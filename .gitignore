@@ -10,3 +10,4 @@ playbooks/intended
 .envrc
 .env
 pyrightconfig.json
+docker-compose.yml
