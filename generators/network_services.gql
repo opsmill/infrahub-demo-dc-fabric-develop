@@ -1,0 +1,74 @@
+query NetworkServicesGeneration($network_service_id: ID) {
+  TopologyNetworkService(ids: [$network_service_id]) {
+    edges {
+      node {
+        __typename
+        id
+        name {
+          value
+        }
+        status {
+          value
+        }
+        description {
+          value
+        }
+        topology {
+          node {
+            name {
+              value
+            }
+            location {
+              node {
+                id
+                name {
+                  value
+                }
+                shortname {
+                  value
+                }
+              }
+            }
+          }
+        }
+        ... on TopologyLayer2NetworkService {
+          vlan {
+            node {
+              vlan_id {
+                value
+              }
+              name {
+                value
+              }
+              description {
+                value
+              }
+            }
+          }
+        }
+        ... on TopologyLayer3NetworkService {
+          vlan {
+            node {
+              vlan_id {
+                value
+              }
+              name {
+                value
+              }
+              description {
+                value
+              }
+            }
+          }
+          prefix {
+            node {
+              prefix {
+                value
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
