@@ -1,6 +1,6 @@
 from infrahub_sdk import InfrahubClient, InfrahubNode
 from infrahub_sdk.generator import InfrahubGenerator
-from infrahub_sdk.protocols import CoreNumberPool
+from infrahub_sdk.protocols import CoreIPPrefixPool, CoreNumberPool
 
 from schema_protocols import (
     InfraVLAN,
@@ -12,18 +12,25 @@ PROVISIONING_STATUS = "provisioning"
 ACTIVE_STATUS = "active"
 DECOMMISSIONING_STATUS = "decommissioning"
 DECOMMISSIONED_STATUS = "decommissioned"
+
 L2_VLAN_POOL = "L2 network service vlan id"
 L2_VLAN_NAME_PREFIX = "l2"
+
 L3_VLAN_POOL = "L3 network service vlan id"
+L3_PREFIX_POOL = "testl3pool"
+L3_VLAN_NAME_PREFIX = "l3"
 
-# infrahubctl generator generate_network_services network_service_id="17fcb90f-9573-4ddd-2f2b-c51c8e7c9106" --branch main
-
+# infrahubctl generator generate_network_services network_service_name="aabbcc" --branch main
 # FIXME: This is not idempotent
 # FIXME: Any way to have debug?
 # FIXME: Any way to log something?
 
 # TODO: Implement batch logic in the builder?
 # TODO: Proper error handling and return code
+# TODO: What about branches?
+# TODO: Manage location
+# TODO: Manage vrf
+# TODO: Manage org
 
 
 class ServiceBuilder:
@@ -35,6 +42,26 @@ class ServiceBuilder:
         # Save parameters
         self.client = client
         self.network_service = network_service
+
+    async def allocate_prefix(self) -> None:
+        """Allocate a prefix coming from a resource pool to the service."""
+
+        # Get resource pool
+        resource_pool = await self.client.get(
+            kind=CoreIPPrefixPool,
+            name__value=L3_PREFIX_POOL,
+        )
+
+        # Craft the data dict for prefix
+        prefix_data: dict = {
+            "status": "active",
+            "description": f"Prefix allocated to l3 service {self.network_service.display_label}",
+            "network_service": self.network_service.id,
+            "role": "server",
+        }
+
+        # Create resource from the pool
+        await self.client.allocate_next_ip_prefix(resource_pool, data=prefix_data)
 
     async def allocate_vlan(
         self, ressource_pool_name: str, vlan_name_prefix: str
@@ -72,7 +99,7 @@ class NetworkServicesGenerator(InfrahubGenerator):
         network_service_node: dict = data["TopologyNetworkService"]["edges"][0]["node"]
 
         # Translate the dict to proper object
-        network_service: TopologyLayer2NetworkService = await InfrahubNode.from_graphql(
+        network_service = await InfrahubNode.from_graphql(
             client=self.client, data=network_service_node, branch=self.branch
         )
 
@@ -87,9 +114,17 @@ class NetworkServicesGenerator(InfrahubGenerator):
 
         # Now we build service depending on the flavour we want
         if network_service.get_kind() == "TopologyLayer2NetworkService":  # FIXME
+            # Allocate a VLAN
             await builder.allocate_vlan(
                 ressource_pool_name=L2_VLAN_POOL, vlan_name_prefix="l2"
             )
+        elif network_service.get_kind() == "TopologyLayer3NetworkService":  # FIXME
+            # Allocate a VLAN ...
+            await builder.allocate_vlan(
+                ressource_pool_name=L3_VLAN_POOL, vlan_name_prefix="l3"
+            )
+            # and a prefix
+            await builder.allocate_prefix()
         else:
             print("we don't support this kind of NetworkService ...")
             return False
