@@ -113,7 +113,6 @@ generics:
         label: Service Name
         kind: Text
         order_weight: 1000
-        optional: true
         unique: true
       - name: description
         kind: Text
