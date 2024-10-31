@@ -1,5 +1,6 @@
-from infrahub_sdk import InfrahubClient, InfrahubNode
+from infrahub_sdk import InfrahubClient
 from infrahub_sdk.generator import InfrahubGenerator
+from infrahub_sdk.node import InfrahubNode
 from infrahub_sdk.protocols import CoreIPPrefixPool, CoreNumberPool
 
 from schema_protocols import (
@@ -31,6 +32,9 @@ L3_VLAN_NAME_PREFIX = "l3"
 # TODO: Manage location
 # TODO: Manage vrf
 # TODO: Manage org
+# Create a pull
+# Create a group
+# Get generator going
 
 
 class ServiceBuilder:
