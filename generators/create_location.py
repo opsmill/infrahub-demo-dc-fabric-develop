@@ -5,8 +5,13 @@ from collections import defaultdict
 from ipaddress import IPv4Network
 from typing import Dict, List
 
-from infrahub_sdk import UUIDT, InfrahubClient, InfrahubNode, NodeStore
-from utils import create_and_add_to_batch, create_and_save, populate_local_store
+from infrahub_sdk.batch import InfrahubBatch
+from infrahub_sdk.node import InfrahubNode
+from infrahub_sdk.store import NodeStore
+from infrahub_sdk import InfrahubClient
+from infrahub_sdk.uuidt import UUIDT
+
+from utils import create_and_save, create_and_add_to_batch, populate_local_store
 
 # flake8: noqa
 # pylint: skip-file
@@ -308,6 +313,7 @@ ACTIVE_STATUS = "active"
 store = NodeStore()
 
 
+<<<<<<< HEAD
 async def create_pool(client: InfrahubClient, log: logging.Logger, branch: str):
     # TODO: Implement it across the board
     # On one single site
@@ -342,6 +348,8 @@ async def create_pool(client: InfrahubClient, log: logging.Logger, branch: str):
     await vlan_id_pool.save()
 
 
+=======
+>>>>>>> main
 async def create_location_hierarchy(
     client: InfrahubClient, log: logging.Logger, branch: str
 ):
