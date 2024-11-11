@@ -73,7 +73,7 @@ python_transforms:
 generator_definitions:
   - name: generate_network_services
     file_path: "generators/network_services.py"
-    targets: all_topologies
+    targets: network_services
     query: generate_network_services
     class_name: NetworkServicesGenerator
     parameters:

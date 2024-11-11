@@ -4,12 +4,14 @@ from infrahub_sdk import InfrahubClient
 from infrahub_sdk.generator import InfrahubGenerator
 
 # Usage:
-#   infrahubctl generator generate_network_services network_service_name="aabbcc" --branch main
-
-# TODO: Manage org
-# Create a pull
-# Create a group
-# Get generator going
+# -----
+# CLI : infrahubctl generator generate_network_services network_service_name="aabbcc" --branch main
+#
+# UI :
+# - Create a branch
+# - Create a Service with name + topology
+# - Add Service to `network_services` Group
+# Create a Proposed Changes
 
 
 ACTIVE_STATUS = "active"
