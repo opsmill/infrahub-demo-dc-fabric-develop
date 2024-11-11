@@ -1,13 +1,61 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
+
 from infrahub_sdk import InfrahubClient
 from infrahub_sdk.generator import InfrahubGenerator
 from infrahub_sdk.node import InfrahubNode
 from infrahub_sdk.protocols import CoreIPPrefixPool, CoreNumberPool
 
-from schema_protocols import (
-    InfraVLAN,
-    TopologyLayer2NetworkService,
-    TopologyLayer3NetworkService,
-)
+from infrahub_sdk.protocols import CoreNode
+if TYPE_CHECKING:
+    from infrahub_sdk.node import RelatedNode, RelationshipManager
+
+class InfraVLAN(CoreNode):
+    name: str
+    description: Optional[str]
+    vlan_id: int
+    status: str
+    role: str
+    location: RelatedNode
+    network_service: RelatedNode
+    profiles: RelationshipManager
+    member_of_groups: RelationshipManager
+    subscriber_of_groups: RelationshipManager
+
+class TopologyNetworkService(CoreNode):
+    name: Optional[str]
+    description: Optional[str]
+    status: str
+    identifier: RelatedNode
+    topology: RelatedNode
+    profiles: RelationshipManager
+    member_of_groups: RelationshipManager
+    subscriber_of_groups: RelationshipManager
+
+class TopologyLayer2NetworkService(TopologyNetworkService):
+    name: Optional[str]
+    description: Optional[str]
+    status: str
+    vlan: RelatedNode
+    identifier: RelatedNode
+    topology: RelatedNode
+    profiles: RelationshipManager
+    member_of_groups: RelationshipManager
+    subscriber_of_groups: RelationshipManager
+
+class TopologyLayer3NetworkService(TopologyNetworkService):
+    name: Optional[str]
+    description: Optional[str]
+    status: str
+    prefix: RelatedNode
+    vlan: RelatedNode
+    identifier: RelatedNode
+    topology: RelatedNode
+    profiles: RelationshipManager
+    member_of_groups: RelationshipManager
+    subscriber_of_groups: RelationshipManager
+
 
 PROVISIONING_STATUS = "provisioning"
 ACTIVE_STATUS = "active"
