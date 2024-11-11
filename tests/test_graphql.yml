@@ -27,9 +27,9 @@ infrahub_tests:
           kind: graphql-query-smoke
 
   - resource: GraphQLQuery
-    resource_name: device_info
+    resource_name: network_services
     tests:
       - name: syntax_check
         spec:
-          path: templates/network_services.gql
+          path: generators/network_services.gql
           kind: graphql-query-smoke
