@@ -77,7 +77,7 @@ generator_definitions:
     query: generate_network_services
     class_name: NetworkServicesGenerator
     parameters:
-      network_service_id: "id"
+      network_service_name: "name__value"
 
 queries:
   - name: topology_info
