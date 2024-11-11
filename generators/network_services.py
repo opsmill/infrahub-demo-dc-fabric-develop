@@ -52,7 +52,7 @@ async def allocate_prefix(
         "description": f"Prefix of {network_service_name}",
         "location": {"id": location["id"]},
         "vrf": {"id": vrf.id},
-        "org": {"id": org.id},
+        "organization": {"id": org.id},
     }
 
     # Create prefix from the pool
