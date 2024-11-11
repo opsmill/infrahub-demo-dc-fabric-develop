@@ -140,11 +140,6 @@ generics:
             description: "Taken out of service."
             color: "#bfbfbf"
     relationships:
-      # - name: identifier
-      #   peer: TopologyNetworkServiceIdentifier
-      #   cardinality: one
-      #   kind: Attribute
-      #   optional: true
       - name: topology
         peer: TopologyTopology
         cardinality: one
@@ -391,27 +386,6 @@ nodes:
       - NetworkManagementServer
 
   # --------------------  Network Services --------------------
-  - name: NetworkServiceIdentifier
-    namespace: Topology
-    description: "Generic model for different types of identifiers used in network services."
-    label: Network Service Identifier
-    icon: "mdi:identifier"
-    menu_placement: "TopologyNetworkService"
-    default_filter: identifier__value
-    order_by:
-      - identifier__value
-    display_labels:
-      - identifier__value
-    attributes:
-      - name: identifier
-        kind: Number
-    relationships:
-      - name: service
-        label: Network Service
-        peer: TopologyNetworkService
-        cardinality: one
-        optional: true
-
   - name: Layer2NetworkService
     namespace: Topology
     description: "Layer 2 network service attached to a Topology."
@@ -425,6 +399,7 @@ nodes:
         peer: InfraVLAN
         cardinality: one
         kind: Component
+        identifier: network_service__vlan
         order_weight: 1500
         optional: true
 
@@ -447,6 +422,7 @@ nodes:
         peer: InfraVLAN
         cardinality: one
         kind: Component
+        identifier: network_service__vlan
         order_weight: 1500
         optional: true
 
@@ -456,6 +432,7 @@ extensions:
       relationships:
         - name: network_service
           peer: TopologyNetworkService
+          identifier: network_service__vlan
           optional: true
           cardinality: one
           kind: Attribute

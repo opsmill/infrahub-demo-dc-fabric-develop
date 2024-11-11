@@ -760,9 +760,12 @@ async def create_location(client: InfrahubClient, log: logging.Logger, branch: s
             if role == "management":
                 data_prefix["vrf"] = client.store.get(key="Management", kind="InfraVRF").id
                 data_prefix["status"] = "active"
+                data_prefix["member_type"] = "address"
             elif role in ("technical", "loopback", "loopback-vtep"):
                 data_prefix["vrf"] = client.store.get(key="Backbone", kind="InfraVRF").id
                 data_prefix["status"] = "reserved"
+                if role != "technical":
+                    data_prefix["member_type"] = "address"
 
             prefix = await client.allocate_next_ip_prefix(
                 resource_pool=location_supernet_pool,
