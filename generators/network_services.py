@@ -51,7 +51,6 @@ async def allocate_prefix(
         "role": SERVER_ROLE,
         "description": f"Prefix of {network_service_name}",
         "location": {"id": location["id"]},
-        "member_type": {"value": "address"},
         "vrf": {"id": vrf.id},
         "org": {"id": org.id},
     }
@@ -61,6 +60,7 @@ async def allocate_prefix(
         resource_pool=resource_pool,
         data=prefix_data,
         identifier=network_service_name,
+        member_type="address",
     )
     await prefix.save(allow_upsert=True)
 
