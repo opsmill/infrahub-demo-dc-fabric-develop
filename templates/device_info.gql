@@ -48,7 +48,19 @@ query device_info($device: String!) {
                     }
                   }
                   ... on TopologyLayer3NetworkService {
-                    # TODO: query vlan here as well
+                    vlan {
+                      node {
+                        name {
+                          value
+                        }
+                        role {
+                          value
+                        }
+                        vlan_id {
+                          value
+                        }
+                      }
+                    }
                     prefix {
                       node {
                         role {

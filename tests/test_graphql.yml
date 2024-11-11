@@ -25,3 +25,11 @@ infrahub_tests:
         spec:
           path: checks/check_device_topology.gql
           kind: graphql-query-smoke
+
+  - resource: GraphQLQuery
+    resource_name: device_info
+    tests:
+      - name: syntax_check
+        spec:
+          path: templates/network_services.gql
+          kind: graphql-query-smoke
