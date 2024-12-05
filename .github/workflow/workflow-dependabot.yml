@@ -17,7 +17,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: "${{ matrix.branch-name }}"
-          submodules: recursive
 
       # Run Dependabot update
       - name: Run Dependabot Update
