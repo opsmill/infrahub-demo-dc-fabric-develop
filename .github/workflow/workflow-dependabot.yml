@@ -1,0 +1,24 @@
+name: Handle Dependabot Trigger
+
+on:
+  repository_dispatch:
+    types:
+      - trigger-dependabot-update
+
+jobs:
+  update-dependencies:
+    strategy:
+      matrix:
+        branch-name:
+          - main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: "${{ matrix.branch-name }}"
+          submodules: recursive
+
+      # Run Dependabot update
+      - name: Run Dependabot Update
+        uses: dependabot/fetch-metadata@v2

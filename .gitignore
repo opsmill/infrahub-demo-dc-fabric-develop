@@ -3,6 +3,7 @@ clab-*
 avd-cEOS-Lab
 *.clab.yml.bak
 **/__pycache__
+**/..DS_Store
 **/.pytest_cache
 **/.ruff_cache
 **/.benchmarks
