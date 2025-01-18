@@ -49,7 +49,6 @@ LOCATIONS = {
                                                         "owner": "Equinix",
                                                         "racks": {
                                                             "Rack-05": {
-                                                                "facility_id": "F33S5R05",
                                                                 "owner": "Duff",
                                                             },
                                                         },
@@ -65,7 +64,6 @@ LOCATIONS = {
                                                         "owner": "Equinix",
                                                         "racks": {
                                                             "Rack-09": {
-                                                                "facility_id": "F33S8R09",
                                                                 "owner": "Duff",
                                                             },
                                                         },
@@ -103,12 +101,8 @@ LOCATIONS = {
                                                         "facility_id": "00-ld8-596",
                                                         "owner": "Duff",
                                                         "racks": {
-                                                            "R01B01": {
-                                                                "facility_id": "LD8-596-R01B01",
-                                                            },
-                                                            "R01B02": {
-                                                                "facility_id": "LD8-596-R01B02",
-                                                            },
+                                                            "R01B01": {},
+                                                            "R01B02": {},
                                                         },
                                                     }
                                                 },
@@ -158,7 +152,6 @@ LOCATIONS = {
                                                         "owner": "Equinix",
                                                         "racks": {
                                                             "Rack-1111": {
-                                                                "facility_id": "F11S1R01",
                                                                 "owner": "Duff",
                                                             }
                                                         },
@@ -169,7 +162,6 @@ LOCATIONS = {
                                                         "owner": "Equinix",
                                                         "racks": {
                                                             "Rack-1121": {
-                                                                "facility_id": "F11S2R01",
                                                                 "owner": "Duff",
                                                             }
                                                         },
@@ -185,7 +177,6 @@ LOCATIONS = {
                                                         "owner": "Equinix",
                                                         "racks": {
                                                             "Rack-1211": {
-                                                                "facility_id": "F12S1R01",
                                                                 "owner": "Duff",
                                                             },
                                                         },
@@ -208,7 +199,6 @@ LOCATIONS = {
                                                         "owner": "Equinix",
                                                         "racks": {
                                                             "Rack-21211": {
-                                                                "facility_id": "F21S1R11",
                                                                 "owner": "Duff",
                                                             },
                                                         },
@@ -219,7 +209,6 @@ LOCATIONS = {
                                                         "owner": "Equinix",
                                                         "racks": {
                                                             "Rack-21210": {
-                                                                "facility_id": "F21S2R10",
                                                                 "owner": "Duff",
                                                             },
                                                         },
@@ -234,12 +223,8 @@ LOCATIONS = {
                                                         "facility_id": "F22S1",
                                                         "owner": "Duff",
                                                         "racks": {
-                                                            "Rack-22105": {
-                                                                "facility_id": "F22S1R05",
-                                                            },
-                                                            "Rack-22106": {
-                                                                "facility_id": "F22S1R06",
-                                                            },
+                                                            "Rack-22105": {},
+                                                            "Rack-22106": {},
                                                         },
                                                     }
                                                 },
