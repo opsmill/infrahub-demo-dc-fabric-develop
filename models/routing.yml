@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://schema.infrahub.app/infrahub/schema/latest.json
 ---
-version: '1.0'
+version: "1.0"
 nodes:
   # --------------------  BGP (ASN, BGP Groups, BGP Sessions)  --------------------
   - name: AutonomousSystem
@@ -103,6 +103,10 @@ nodes:
       - name: description
         kind: Text
         optional: true
+        read_only: true
+        computed_attribute:
+          kind: Jinja2
+          jinja2_template: "{{ peer_session__description_value }}"
       - name: import_policies
         kind: Text
         optional: true
