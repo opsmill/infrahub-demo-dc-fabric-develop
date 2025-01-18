@@ -10,15 +10,12 @@ class ComputedLinkDescription(InfrahubTransform):
 
         description = f"{interface_dict['name']['value']}.{interface_dict['device']['node']['name']['value']}"
         # Build the corresponding connected_endpoint if it exists.
-        if interface_dict.get("connected_endpoint"):
+        if interface_dict["connected_endpoint"]:
             connected_endpoint = await self.client.get(
                 kind=interface_dict["connected_endpoint"]["node"]["__typename"],
                 id=interface_dict["connected_endpoint"]["node"]["id"],
             )
-            await connected_endpoint.device.fetch()
-            connected_endpoint_description = (
-                f"{connected_endpoint.name.value}.{connected_endpoint.device.peer}"
-            )
+            connected_endpoint_description = f"{connected_endpoint.name.value}.{connected_endpoint.device.display_label}"
 
             description += f" to {connected_endpoint_description}"
 

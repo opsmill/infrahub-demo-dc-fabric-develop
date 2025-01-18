@@ -906,19 +906,13 @@ async def generate_topology(
                     kind="InfraInterfaceL3",
                     name__value=uplink_port,
                     device__name__value=f"{topology_name}-leaf{leaf_idx}",
+                    include=["device"],
                 )
                 # store.get(kind="InfraInterfaceL3", key=f"{topology_name}-leaf{leaf_idx}-{uplink_port}")
 
-                new_spine_intf_description = (
-                    intf_spine_obj.description.value
-                    + f" to {intf_leaf_obj.description.value}"
-                )
-                spine_ico_ip_description = intf_spine_obj.description.value
-                new_leaf_intf_description = (
-                    intf_leaf_obj.description.value
-                    + f" to {intf_spine_obj.description.value}"
-                )
-                leaf_ico_ip_description = intf_leaf_obj.description.value
+                # Example: ethernet1.leaf1
+                spine_ico_ip_description = f"{intf_spine_obj.name.value}.{intf_spine_obj.device.display_label}".lower()
+                leaf_ico_ip_description = f"{intf_leaf_obj.name.value}.{intf_leaf_obj.device.display_label}".lower()
 
                 interconnection_subnet = next(interconnection_subnets)
                 interconnection_ips = list(interconnection_subnet.hosts())
@@ -970,7 +964,6 @@ async def generate_topology(
                 # FIXME if we want to redo the cabling - may need to cleanup the other end first
 
                 # Update Spine interface (description, endpoints, status)
-                intf_spine_obj.description.value = new_spine_intf_description
                 intf_spine_obj.status.value = ACTIVE_STATUS
                 intf_spine_obj.connected_endpoint = intf_leaf_obj
                 await intf_spine_obj.save(allow_upsert=True)
@@ -979,7 +972,6 @@ async def generate_topology(
                 # FIXME if we want to redo the cabling - may need to cleanup the other end first
 
                 # Update Leaf interface (description, endpoints, status)
-                intf_leaf_obj.description.value = new_leaf_intf_description
                 intf_leaf_obj.status.value = ACTIVE_STATUS
                 intf_leaf_obj.connected_endpoint = intf_spine_obj
                 await intf_leaf_obj.save(allow_upsert=True)
@@ -1048,11 +1040,7 @@ async def generate_topology(
                         "role": {"value": "backbone"},
                         "device": {"id": spine_obj.id},
                         "peer_group": {"id": spine_bgp_group_obj.id},
-                        "description": {
-                            "value": remove_interface_prefixes(
-                                new_spine_intf_description
-                            )
-                        },
+                        "description": {"value": intf_spine_obj.description.value},
                     }
                     spine_session_obj = await create_and_save(
                         client=client,
@@ -1073,11 +1061,7 @@ async def generate_topology(
                         "device": {"id": leaf_obj.id},
                         "peer_session": {"id": spine_session_obj.id},
                         "peer_group": {"id": leaf_bgp_group_obj.id},
-                        "description": {
-                            "value": remove_interface_prefixes(
-                                new_leaf_intf_description
-                            )
-                        },
+                        "description": {"value": intf_leaf_obj.description.value},
                     }
                     leaf_session_obj = await create_and_add_to_batch(
                         client=client,
