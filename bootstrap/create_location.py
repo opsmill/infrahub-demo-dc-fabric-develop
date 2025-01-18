@@ -521,7 +521,6 @@ async def create_location_hierarchy(
                                 for rack_name, rack_data in suite_data.get(
                                     "racks", {}
                                 ).items():
-                                    rack_facility_id = rack_data["facility_id"]
                                     rack_owner = rack_data.get("owner")
                                     owner_id = None
                                     if rack_owner == "Duff":
@@ -536,7 +535,6 @@ async def create_location_hierarchy(
                                             "value": f"Rack {rack_name.lower()} in {suite_shortname.lower()}-{floor_shortname.lower()}-{building_shortname.lower()}"
                                         },
                                         "shortname": rack_name.upper(),
-                                        "facility_id": rack_facility_id.upper(),
                                         "owner": owner_id,
                                         "parent": suite_obj,
                                     }
